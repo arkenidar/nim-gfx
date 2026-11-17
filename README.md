@@ -68,6 +68,32 @@ nim c -r -d:useCairo examples/hello.nim
 
 A window opens, draws a few primitives, and closes on `Esc` or the window ✕.
 
+## Windows (MSYS2 MinGW64)
+
+On Windows, the easiest native build is via MSYS2's **MinGW64** environment.
+Use the **`MSYS2 MinGW64`** shell — *not* the plain `MSYS2` shell, whose binaries
+depend on `msys-2.0.dll`:
+
+```sh
+# in the MSYS2 MinGW64 shell
+pacman -S mingw-w64-x86_64-cairo          # libcairo (Cairo backend)
+pacman -S mingw-w64-x86_64-SDL3           # SDL3 (if packaged; else use the
+                                          # SDL3 MinGW dev tarball from libsdl.org)
+
+nim c -r examples/hello.nim                # default SDL backend
+nim c -r -d:useCairo examples/hello.nim    # Cairo backend
+```
+
+Inside the MinGW64 shell, `-lcairo` and `-lSDL3` resolve from `/mingw64/lib`
+automatically. To ship a standalone `.exe`, list its DLL dependencies and copy
+them beside it:
+
+```sh
+ldd examples/hello.exe
+# typical: libcairo-2.dll, libpixman-1-0.dll, libpng16-16.dll, zlib1.dll,
+#          libfreetype-6.dll, libfontconfig-1.dll, libexpat-1.dll, ...
+```
+
 ## Layout
 
 ```
