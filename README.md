@@ -12,7 +12,7 @@ This is the foundation layer for a Nim GUI / game stack: higher-level packages
 | Backend | Selected by | Status |
 |---|---|---|
 | SDL3 renderer | (default) | ✅ implemented |
-| Cairo (software, AA vector + text) | `-d:useCairo` | 🚧 not implemented yet |
+| Cairo (software, AA vector + text) | `-d:useCairo` | ✅ implemented |
 
 The public API is identical regardless of backend; coordinates are window
 pixels.
@@ -61,6 +61,9 @@ proc pollEvent(): Option[Event]   # returns the next meaningful event, or none
 ```sh
 # requires SDL3 (headers + lib) installed; Nim >= 2.0
 nim c -r examples/hello.nim
+
+# or the Cairo backend (requires libcairo):
+nim c -r -d:useCairo examples/hello.nim
 ```
 
 A window opens, draws a few primitives, and closes on `Esc` or the window ✕.
@@ -71,9 +74,10 @@ A window opens, draws a few primitives, and closes on `Esc` or the window ✕.
 src/
   gfx.nim        # public facade (types + backend selection)
   gfx_sdl.nim    # SDL3 renderer backend (default)
-  gfx_cairo.nim  # Cairo software backend (not yet implemented)
-  sdl3.nim       # raw SDL3 FFI subset
-  cairo.nim      # raw Cairo FFI subset (stub)
+  gfx_cairo.nim  # Cairo software backend (-d:useCairo)
+  sdl3.nim       # raw SDL3 FFI subset + shared window/input helpers
+  sdl_events.nim # shared SDL -> gfx event translation
+  cairo.nim      # raw Cairo FFI subset
 examples/
   hello.nim      # smoke test
 ```

@@ -35,9 +35,14 @@ const
   SDL_BUTTON_MIDDLE* = 2'u8
   SDL_BUTTON_RIGHT*  = 3'u8
 
+  # SDL pixel format / texture access (used by the Cairo backend).
+  SDL_PIXELFORMAT_ARGB8888*    = 0x16362004'u32
+  SDL_TEXTUREACCESS_STREAMING* = 1'i32
+
 type
   SDL_Window*   = object
   SDL_Renderer* = object
+  SDL_Texture*  = object
 
   SDL_FRect* {.bycopy.} = object
     x*, y*, w*, h*: cfloat
@@ -110,6 +115,33 @@ proc SDL_DestroyRenderer*(renderer: ptr SDL_Renderer) {.importc, cdecl.}
 proc SDL_DestroyWindow*(window: ptr SDL_Window) {.importc, cdecl.}
 proc SDL_Quit*() {.importc, cdecl.}
 proc SDL_GetError*(): cstring {.importc, cdecl.}
+proc SDL_CreateTexture*(renderer: ptr SDL_Renderer; format: uint32; access: cint; w, h: cint): ptr SDL_Texture {.importc, cdecl.}
+proc SDL_UpdateTexture*(texture: ptr SDL_Texture; rect, pixels: pointer; pitch: cint): bool {.importc, cdecl.}
+proc SDL_RenderTexture*(renderer: ptr SDL_Renderer; texture: ptr SDL_Texture; srcrect, dstrect: pointer): bool {.importc, cdecl.}
+proc SDL_DestroyTexture*(texture: ptr SDL_Texture) {.importc, cdecl.}
+
+# --- shared window/input helpers (used by both gfx backends) ---
+
+proc initSdlWindow*(title: string; w, h: int): (ptr SDL_Window, ptr SDL_Renderer) =
+  if not SDL_Init(SDL_INIT_VIDEO):
+    raise newException(IOError, "SDL_Init failed: " & $SDL_GetError())
+  let win = SDL_CreateWindow(title.cstring, cint(w), cint(h), 0'u64)
+  if win.isNil:
+    SDL_Quit()
+    raise newException(IOError, "SDL_CreateWindow failed: " & $SDL_GetError())
+  let ren = SDL_CreateRenderer(win, nil)
+  if ren.isNil:
+    SDL_DestroyWindow(win)
+    SDL_Quit()
+    raise newException(IOError, "SDL_CreateRenderer failed: " & $SDL_GetError())
+  discard SDL_StartTextInput(win)  # otherwise SDL_EVENT_TEXT_INPUT is never sent
+  (win, ren)
+
+proc sdlShutdown*() =
+  SDL_Quit()
+
+proc sdlTicks*(): int =
+  int(SDL_GetTicks())
 
 when defined(windows):
   {.passL: "-Wl,-Bstatic -lSDL3 -Wl,-Bdynamic -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8".}
