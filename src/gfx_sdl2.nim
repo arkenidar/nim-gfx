@@ -1,17 +1,17 @@
-# gfx_sdl.nim — SDL3 renderer backend for nim-gfx.
+# gfx_sdl2.nim — SDL2 renderer backend for nim-gfx.
 #
-# Implements the public procs of the gfx facade on top of the raw sdl3.nim
+# Implements the public procs of the gfx facade on top of the raw sdl2.nim
 # bindings. This file is `include`d by gfx.nim, so it must NOT import gfx.nim
 # itself: the public types (Color, Window, Renderer, Event, ...) and the
 # `std/options` import are already in scope.
 
-import ./sdl3
-include sdl_events  # pollEvent*, toKey, toButton (shared with the Cairo backend)
+import ./sdl2
+include sdl2_events  # pollEvent*, toKey, toButton (shared with the Cairo-on-SDL2 backend)
 
 const PI = 3.14159265358979323846
 
 proc openWindow*(title: string; w, h: int): (Window, Renderer) =
-  let (win, ren) = initSdlWindow(title, w, h)
+  let (win, ren) = initSdl2Window(title, w, h)
   (cast[Window](win), cast[Renderer](ren))
 
 proc close*(w: Window; r: Renderer) =
@@ -19,7 +19,7 @@ proc close*(w: Window; r: Renderer) =
   if w != nil: SDL_DestroyWindow(cast[ptr SDL_Window](w))
 
 proc shutdown*() =
-  sdlShutdown()
+  sdl2Shutdown()
 
 proc setColor(r: Renderer; c: Color) =
   discard SDL_SetRenderDrawColor(cast[ptr SDL_Renderer](r), c.r, c.g, c.b, c.a)
@@ -31,15 +31,15 @@ proc clear*(r: Renderer; c: Color) =
 proc fillRect*(r: Renderer; x, y, w, h: float; c: Color) =
   setColor(r, c)
   var rect = SDL_FRect(x: cfloat(x), y: cfloat(y), w: cfloat(w), h: cfloat(h))
-  discard SDL_RenderFillRect(cast[ptr SDL_Renderer](r), addr rect)
+  discard SDL_RenderFillRectF(cast[ptr SDL_Renderer](r), addr rect)
 
 proc drawLine*(r: Renderer; x1, y1, x2, y2: float; c: Color) =
   setColor(r, c)
-  discard SDL_RenderLine(cast[ptr SDL_Renderer](r),
+  discard SDL_RenderDrawLineF(cast[ptr SDL_Renderer](r),
     cfloat(x1), cfloat(y1), cfloat(x2), cfloat(y2))
 
 proc drawCircle*(r: Renderer; cx, cy, radius: float; c: Color) =
-  # Filled circle via horizontal scanlines (SDL3 core has no circle primitive).
+  # Filled circle via horizontal scanlines (SDL2 core has no circle primitive).
   var y = -radius
   while y <= radius:
     let half = sqrt(radius * radius - y * y)
@@ -73,7 +73,7 @@ proc roundedRect*(r: Renderer; x, y, w, h, radius: float; c: Color) =
     yy += 1.0
 
 proc present*(r: Renderer) =
-  discard SDL_RenderPresent(cast[ptr SDL_Renderer](r))
+  SDL_RenderPresent(cast[ptr SDL_Renderer](r))
 
 proc ticks*(): int =
-  sdlTicks()
+  sdl2Ticks()

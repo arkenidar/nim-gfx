@@ -5,8 +5,11 @@
 # primitives, and input events. The concrete backend is selected at compile
 # time:
 #
-#   default      -> SDL3 renderer backend (gfx_sdl.nim)
-#   -d:useCairo  -> Cairo software backend (gfx_cairo.nim; not implemented yet)
+#   -d:useSdl3             -> SDL3 renderer backend
+#   -d:useSdl2             -> SDL2 renderer backend
+#   -d:useSdl3 -d:useCairo -> Cairo on SDL3
+#   -d:useSdl2 -d:useCairo -> Cairo on SDL2
+#   (no backend flag is a compile error — there is no default)
 #
 # All coordinates are window pixels.
 
@@ -51,6 +54,15 @@ proc white*(a: uint8 = 255): Color {.inline.} = rgb(255, 255, 255, a)
 proc gray*(v: uint8, a: uint8 = 255): Color {.inline.} = rgb(v, v, v, a)
 
 when defined(useCairo):
-  include gfx_cairo
+  when defined(useSdl2):
+    include gfx_cairo_sdl2
+  elif defined(useSdl3):
+    include gfx_cairo_sdl3
+  else:
+    {.error: "gfx: -d:useCairo needs a shell — also pass -d:useSdl3 or -d:useSdl2".}
+elif defined(useSdl2):
+  include gfx_sdl2
+elif defined(useSdl3):
+  include gfx_sdl3
 else:
-  include gfx_sdl
+  {.error: "gfx: no backend selected — pass -d:useSdl3 or -d:useSdl2 (optionally -d:useCairo)".}

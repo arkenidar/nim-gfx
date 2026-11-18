@@ -1,4 +1,5 @@
-# gfx_cairo.nim — Cairo software backend for nim-gfx (selected with -d:useCairo).
+# gfx_cairo_sdl3.nim — Cairo software backend on the SDL3 shell (selected with
+# -d:useCairo -d:useSdl3).
 #
 # Draws with Cairo into an in-memory ARGB32 image surface, then blits it into
 # the SDL window as a texture. This file is `include`d by gfx.nim, so it must
@@ -6,7 +7,7 @@
 
 import ./sdl3
 import ./cairo
-include sdl_events  # pollEvent*, toKey, toButton (shared with the SDL backend)
+include sdl_events  # pollEvent*, toKey, toButton (shared with the SDL3 backend)
 
 const PI = 3.14159265358979323846
 

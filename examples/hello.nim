@@ -1,7 +1,8 @@
 # examples/hello.nim — nim-gfx smoke test.
 #
 # Opens a window, draws a few primitives, and closes on Escape or the window ✕.
-# Build:  nim c -r examples/hello.nim
+# Build:  nim c -r -d:useSdl3 examples/hello.nim
+#         (or -d:useSdl2, -d:useSdl3 -d:useCairo, -d:useSdl2 -d:useCairo)
 
 import std/options
 import gfx

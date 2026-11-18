@@ -1,8 +1,8 @@
 # nim-gfx
 
 A small, backend-agnostic graphics facade for Nim: a window + renderer, colors,
-drawing primitives, and input events — on top of a raw SDL3 FFI binding (no
-third-party bindings package).
+drawing primitives, and input events — on top of raw SDL2/SDL3/Cairo FFI
+bindings (no third-party bindings package).
 
 This is the foundation layer for a Nim GUI / game stack: higher-level packages
 (widgets, layout, game views) import **only `gfx`** and never touch SDL.
@@ -11,8 +11,12 @@ This is the foundation layer for a Nim GUI / game stack: higher-level packages
 
 | Backend | Selected by | Status |
 |---|---|---|
-| SDL3 renderer | (default) | ✅ implemented |
-| Cairo (software, AA vector + text) | `-d:useCairo` | ✅ implemented |
+| SDL3 renderer | `-d:useSdl3` | ✅ |
+| SDL2 renderer | `-d:useSdl2` | ✅ |
+| Cairo (anti-aliased) on SDL3 | `-d:useSdl3 -d:useCairo` | ✅ |
+| Cairo (anti-aliased) on SDL2 | `-d:useSdl2 -d:useCairo` | ✅ |
+
+There is **no default backend** — a build must pass one of the flags above.
 
 The public API is identical regardless of backend; coordinates are window
 pixels.
@@ -59,11 +63,11 @@ proc pollEvent(): Option[Event]   # returns the next meaningful event, or none
 ## Build & run
 
 ```sh
-# requires SDL3 (headers + lib) installed; Nim >= 2.0
-nim c -r examples/hello.nim
-
-# or the Cairo backend (requires libcairo):
-nim c -r -d:useCairo examples/hello.nim
+# requires SDL3 and/or SDL2 (+ libcairo for the Cairo backends); Nim >= 2.0
+nim c -r -d:useSdl3 examples/hello.nim                # SDL3 renderer
+nim c -r -d:useSdl2 examples/hello.nim                # SDL2 renderer
+nim c -r -d:useSdl3 -d:useCairo examples/hello.nim    # Cairo on SDL3
+nim c -r -d:useSdl2 -d:useCairo examples/hello.nim    # Cairo on SDL2
 ```
 
 A window opens, draws a few primitives, and closes on `Esc` or the window ✕.
@@ -76,12 +80,15 @@ depend on `msys-2.0.dll`:
 
 ```sh
 # in the MSYS2 MinGW64 shell
-pacman -S mingw-w64-x86_64-cairo          # libcairo (Cairo backend)
-pacman -S mingw-w64-x86_64-SDL3           # SDL3 (if packaged; else use the
+pacman -S mingw-w64-x86_64-SDL2           # SDL2 backend
+pacman -S mingw-w64-x86_64-SDL3           # SDL3 backend (if packaged; else use the
                                           # SDL3 MinGW dev tarball from libsdl.org)
+pacman -S mingw-w64-x86_64-cairo          # Cairo backends
 
-nim c -r examples/hello.nim                # default SDL backend
-nim c -r -d:useCairo examples/hello.nim    # Cairo backend
+nim c -r -d:useSdl3 examples/hello.nim             # SDL3 backend
+nim c -r -d:useSdl2 examples/hello.nim             # SDL2 backend
+nim c -r -d:useSdl3 -d:useCairo examples/hello.nim # Cairo on SDL3
+nim c -r -d:useSdl2 -d:useCairo examples/hello.nim # Cairo on SDL2
 ```
 
 Inside the MinGW64 shell, `-lcairo` and `-lSDL3` resolve from `/mingw64/lib`
@@ -101,18 +108,47 @@ ldd examples/hello.exe
 #          libfreetype-6.dll, libfontconfig-1.dll, libexpat-1.dll, ...
 ```
 
+### Cross-compiling from Linux (to test under Wine)
+
+With `gcc-mingw-w64-x86-64` installed you can build Windows `.exe` files and run
+them under Wine. Put only the SDL2/Cairo *import* libs in a neutral `-L` dir so
+they don't clash with the host mingw runtime:
+
+```sh
+mkdir -p /tmp/winlib && cp <msys64>/mingw64/lib/libSDL2.dll.a <msys64>/mingw64/lib/libcairo.dll.a /tmp/winlib/
+nim c --os:windows --cpu:amd64 --cc:gcc \
+     --gcc.exe:x86_64-w64-mingw32-gcc --gcc.linkerexe:x86_64-w64-mingw32-gcc \
+     --passL:-L/tmp/winlib -d:useSdl2 -o:hello.exe examples/hello.nim
+WINEPATH=<msys64>/mingw64/bin wine hello.exe
+```
+
+## Termux (Android)
+
+`nim` and `sdl2` are packaged; SDL3 isn't, so use the SDL2 backend (run under
+Termux:X11 with `DISPLAY=:0`):
+
+```sh
+pkg install nim sdl2 git
+git clone https://github.com/arkenidar/nim-gfx && cd nim-gfx
+nim c -r -d:useSdl2 examples/hello.nim
+```
+
 ## Layout
 
 ```
 src/
-  gfx.nim        # public facade (types + backend selection)
-  gfx_sdl.nim    # SDL3 renderer backend (default)
-  gfx_cairo.nim  # Cairo software backend (-d:useCairo)
-  sdl3.nim       # raw SDL3 FFI subset + shared window/input helpers
-  sdl_events.nim # shared SDL -> gfx event translation
-  cairo.nim      # raw Cairo FFI subset
+  gfx.nim            # public facade (types + backend selection)
+  gfx_sdl3.nim       # SDL3 renderer backend
+  gfx_sdl2.nim       # SDL2 renderer backend
+  gfx_cairo_sdl3.nim # Cairo on SDL3
+  gfx_cairo_sdl2.nim # Cairo on SDL2
+  sdl3.nim           # raw SDL3 FFI + shared window/input helpers
+  sdl2.nim           # raw SDL2 FFI + shared window/input helpers
+  sdl_events.nim     # SDL3 -> gfx event translation
+  sdl2_events.nim    # SDL2 -> gfx event translation
+  cairo.nim          # raw Cairo FFI subset
 examples/
-  hello.nim      # smoke test
+  hello.nim          # smoke test
 ```
 
 ## License
