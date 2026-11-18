@@ -7,5 +7,8 @@ bin/
 
 # compiled examples / binaries
 hello
-examples/hello
 *.exe
+
+# keep only .nim sources in examples/ (ignore any compiled binaries there)
+examples/*
+!examples/*.nim
