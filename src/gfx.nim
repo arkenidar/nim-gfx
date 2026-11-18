@@ -57,6 +57,23 @@ proc black*(a: uint8 = 255): Color {.inline.} = rgb(0, 0, 0, a)
 proc white*(a: uint8 = 255): Color {.inline.} = rgb(255, 255, 255, a)
 proc gray*(v: uint8, a: uint8 = 255): Color {.inline.} = rgb(v, v, v, a)
 
+# --- logical coordinate system (shared by all backends) ---
+# gLogW/gLogH = logical canvas size (0 = not set: draw/input in window pixels).
+# gWinW/gWinH = current window size (set by openWindow, updated on resize).
+var gLogW = 0.0
+var gLogH = 0.0
+var gWinW = 0
+var gWinH = 0
+
+proc toLogical*(x, y: float): (float, float) =
+  ## Inverse of the letterbox transform: window pixel -> logical coordinate.
+  if gLogW <= 0.0 or gLogH <= 0.0 or gWinW <= 0 or gWinH <= 0:
+    return (x, y)
+  let scale = min(float(gWinW) / gLogW, float(gWinH) / gLogH)
+  let offX = (float(gWinW) - gLogW * scale) / 2.0
+  let offY = (float(gWinH) - gLogH * scale) / 2.0
+  ((x - offX) / scale, (y - offY) / scale)
+
 when defined(useCairo):
   when defined(useSdl2):
     include gfx_cairo_sdl2

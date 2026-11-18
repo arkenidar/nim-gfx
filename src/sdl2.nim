@@ -46,6 +46,7 @@ const
 
   SDL_PIXELFORMAT_ARGB8888*    = 0x16362004'u32
   SDL_TEXTUREACCESS_STREAMING* = 1'i32
+  SDL_WINDOW_FULLSCREEN_DESKTOP* = 0x00001001'u32
 
 type
   SDL_Window*   = object
@@ -154,6 +155,10 @@ proc SDL_RenderPresent*(renderer: ptr SDL_Renderer) {.importc, cdecl.}
 proc SDL_CreateTexture*(renderer: ptr SDL_Renderer; format: uint32; access: cint; w, h: cint): ptr SDL_Texture {.importc, cdecl.}
 proc SDL_UpdateTexture*(texture: ptr SDL_Texture; rect: ptr SDL_Rect; pixels: pointer; pitch: cint): cint {.importc, cdecl.}
 proc SDL_DestroyTexture*(texture: ptr SDL_Texture) {.importc, cdecl.}
+proc SDL_GetWindowSize*(window: ptr SDL_Window; w, h: ptr cint) {.importc, cdecl.}
+proc SDL_MaximizeWindow*(window: ptr SDL_Window) {.importc, cdecl.}
+proc SDL_SetWindowFullscreen*(window: ptr SDL_Window; flags: uint32): cint {.importc, cdecl.}
+proc SDL_RenderSetLogicalSize*(renderer: ptr SDL_Renderer; w, h: cint): cint {.importc, cdecl.}
 proc SDL_PollEvent*(event: ptr SDL_Event): cint {.importc, cdecl.}
 proc SDL_StartTextInput*() {.importc, cdecl.}
 proc SDL_StopTextInput*() {.importc, cdecl.}

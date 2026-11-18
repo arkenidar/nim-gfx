@@ -1,49 +1,68 @@
-# examples/textdemo.nim — visual demo: Pango text + Cairo primitives.
+# examples/textdemo.nim — visual demo: coordinate scaling + Pango text + picking.
 #
 # Build & run:  nim c -r -d:useSdl3 -d:useCairo examples/textdemo.nim
 #               (Esc or window X to quit)
+#
+# The window is drawn in a LOGICAL 640x480 space that gfx maps (letterboxed,
+# crisp) onto whatever window size you give it. Click/tap the circle or the
+# rounded box and it echoes which one you picked — input uses the SAME logical
+# space as drawing, so picking matches what you see at any size/orientation.
 
 import std/options
 import gfx
 
-const WinW = 640
-const WinH = 480
+const LogW = 640.0
+const LogH = 480.0
+
+const circle = (cx: 180.0, cy: 220.0, r: 90.0)
+const box = (x: 380.0, y: 150.0, w: 220.0, h: 130.0)
+
+proc inCircle(x, y: float): bool =
+  (x - circle.cx) * (x - circle.cx) + (y - circle.cy) * (y - circle.cy) <= circle.r * circle.r
+
+proc inBox(x, y: float): bool =
+  x >= box.x and x <= box.x + box.w and y >= box.y and y <= box.y + box.h
 
 proc main() =
-  let (win, ren) = openWindow("nim-gfx text demo", WinW, WinH)
+  let (win, ren) = openWindow("nim-gfx coordinate demo", 960, 720)
+  maximize(win)
+  setLogicalSize(ren, LogW, LogH)
 
+  var msg = "click/tap the circle or the box"
   var running = true
   while running:
     while true:
-      let ev = pollEvent()
-      if ev.isNone: break
-      case ev.get.kind
+      let maybe = pollEvent()
+      if maybe.isNone: break
+      let e = maybe.get
+      case e.kind
       of evQuit: running = false
       of evKeyDown:
-        if ev.get.key == keyEscape: running = false
+        if e.key == keyEscape: running = false
+      of evMouseDown, evFingerDown:
+        let x = if e.kind == evFingerDown: e.fingerX else: float(e.mouseX)
+        let y = if e.kind == evFingerDown: e.fingerY else: float(e.mouseY)
+        if inCircle(x, y): msg = "picked the CIRCLE"
+        elif inBox(x, y): msg = "picked the ROUNDED BOX"
+        else: msg = "picked nothing at (" & $int(x) & ", " & $int(y) & ")"
+      of evResize:
+        let (w, h) = windowSize(win)
+        let orient = if w > h: "landscape" else: "portrait"
+        msg = "resized to " & $w & "x" & $h & " (" & orient & ")"
       else: discard
 
     clear(ren, gray(22))
 
-    # single-line text at various sizes
-    drawText(ren, 24, 24, "nim-gfx + Pango text", white(), 30)
-    drawText(ren, 24, 74, "small (14)", rgb(120, 200, 255), 14)
-    drawText(ren, 24, 100, "big (44)", rgb(255, 180, 60), 44)
+    drawCircle(ren, circle.cx, circle.cy, circle.r, rgb(255, 90, 90))
+    roundedRect(ren, box.x, box.y, box.w, box.h, 22, rgb(90, 140, 255))
+    drawText(ren, box.x + 18, box.y + 18, "rounded box", white(), 16)
 
-    # wrapped text inside a bordered box
-    let boxX = 24.0
-    let boxY = 170.0
-    let boxW = 300.0
-    roundedRect(ren, boxX, boxY, boxW, 110, 8, gray(40))
-    drawTextWrapped(ren, boxX + 12, boxY + 10, boxW - 24,
-      "Pango wraps this paragraph to the box width — no manual word breaking.",
-      rgb(210, 220, 255), 16)
-
-    # anti-aliased primitives
-    drawCircle(ren, 500, 120, 46, rgb(255, 90, 90))
-    drawCircleOutline(ren, 500, 250, 58, rgb(120, 220, 120))
-    roundedRect(ren, 420, 350, 180, 90, 20, rgb(200, 120, 255))
-    drawText(ren, 440, 385, "rounded rect", white(), 16)
+    drawText(ren, 20, 20, msg, white(), 18)
+    drawText(ren, 20, 46, "logical " & $int(LogW) & "x" & $int(LogH) & "  ->  window",
+      rgb(150, 200, 150), 14)
+    drawTextWrapped(ren, 20, 380, 400,
+      "Pango text: single line and wrapped paragraph, rendered crisp at the window's native resolution via coordinate scaling.",
+      rgb(210, 220, 255), 15)
 
     present(ren)
 

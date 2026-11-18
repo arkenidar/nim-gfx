@@ -36,6 +36,9 @@ proc cairo_clip*(cr: ptr cairo_t) {.importc, cdecl.}
 proc cairo_reset_clip*(cr: ptr cairo_t) {.importc, cdecl.}
 proc cairo_set_line_width*(cr: ptr cairo_t; width: cdouble) {.importc, cdecl.}
 proc cairo_set_line_cap*(cr: ptr cairo_t; cap: cint) {.importc, cdecl.}
+proc cairo_translate*(cr: ptr cairo_t; tx, ty: cdouble) {.importc, cdecl.}
+proc cairo_scale*(cr: ptr cairo_t; sx, sy: cdouble) {.importc, cdecl.}
+proc cairo_identity_matrix*(cr: ptr cairo_t) {.importc, cdecl.}
 
 {.passL: "-lcairo".}
 

@@ -52,35 +52,46 @@ proc pollEvent*(): Option[Event] =
         text = $cast[cstring](e.text.text)
       return some(Event(kind: evTextInput, text: text))
     of SDL_EVENT_MOUSE_MOTION:
-      return some(Event(kind: evMouseMotion,
-        mouseX: int(e.motion.x), mouseY: int(e.motion.y)))
+      let (lx, ly) = toLogical(float(e.motion.x), float(e.motion.y))
+      return some(Event(kind: evMouseMotion, mouseX: int(lx), mouseY: int(ly)))
     of SDL_EVENT_MOUSE_BUTTON_DOWN:
+      let (lx, ly) = toLogical(float(e.button.x), float(e.button.y))
       return some(Event(kind: evMouseDown, button: toButton(e.button.button),
-        mouseX: int(e.button.x), mouseY: int(e.button.y)))
+        mouseX: int(lx), mouseY: int(ly)))
     of SDL_EVENT_MOUSE_BUTTON_UP:
+      let (lx, ly) = toLogical(float(e.button.x), float(e.button.y))
       return some(Event(kind: evMouseUp, button: toButton(e.button.button),
-        mouseX: int(e.button.x), mouseY: int(e.button.y)))
+        mouseX: int(lx), mouseY: int(ly)))
     of SDL_EVENT_MOUSE_WHEEL:
       return some(Event(kind: evMouseWheel,
         wheelX: int(e.wheel.x), wheelY: int(e.wheel.y),
         mouseX: int(e.wheel.mouseX), mouseY: int(e.wheel.mouseY)))
     of SDL_EVENT_FINGER_DOWN:
+      let fx = if gWinW > 0: float(e.finger.x) * float(gWinW) else: float(e.finger.x)
+      let fy = if gWinH > 0: float(e.finger.y) * float(gWinH) else: float(e.finger.y)
+      let (lx, ly) = toLogical(fx, fy)
       return some(Event(kind: evFingerDown, fingerId: int64(e.finger.fingerID),
-        fingerX: float(e.finger.x), fingerY: float(e.finger.y),
+        fingerX: lx, fingerY: ly,
         fingerDx: float(e.finger.dx), fingerDy: float(e.finger.dy),
         pressure: float(e.finger.pressure)))
     of SDL_EVENT_FINGER_UP:
+      let fx = if gWinW > 0: float(e.finger.x) * float(gWinW) else: float(e.finger.x)
+      let fy = if gWinH > 0: float(e.finger.y) * float(gWinH) else: float(e.finger.y)
+      let (lx, ly) = toLogical(fx, fy)
       return some(Event(kind: evFingerUp, fingerId: int64(e.finger.fingerID),
-        fingerX: float(e.finger.x), fingerY: float(e.finger.y),
+        fingerX: lx, fingerY: ly,
         fingerDx: float(e.finger.dx), fingerDy: float(e.finger.dy),
         pressure: float(e.finger.pressure)))
     of SDL_EVENT_FINGER_MOTION:
+      let fx = if gWinW > 0: float(e.finger.x) * float(gWinW) else: float(e.finger.x)
+      let fy = if gWinH > 0: float(e.finger.y) * float(gWinH) else: float(e.finger.y)
+      let (lx, ly) = toLogical(fx, fy)
       return some(Event(kind: evFingerMotion, fingerId: int64(e.finger.fingerID),
-        fingerX: float(e.finger.x), fingerY: float(e.finger.y),
+        fingerX: lx, fingerY: ly,
         fingerDx: float(e.finger.dx), fingerDy: float(e.finger.dy),
         pressure: float(e.finger.pressure)))
     of SDL_EVENT_WINDOW_RESIZED:
-      return some(Event(kind: evResize,
-        resizeW: int(e.window.data1), resizeH: int(e.window.data2)))
+      gWinW = int(e.window.data1); gWinH = int(e.window.data2)
+      return some(Event(kind: evResize, resizeW: gWinW, resizeH: gWinH))
     else:
       discard  # uninteresting event; keep draining

@@ -13,6 +13,7 @@ const PI = 3.14159265358979323846
 
 proc openWindow*(title: string; w, h: int): (Window, Renderer) =
   let (win, ren) = initSdlWindow(title, w, h)
+  gWinW = w; gWinH = h
   (cast[Window](win), cast[Renderer](ren))
 
 proc close*(w: Window; r: Renderer) =
@@ -91,6 +92,21 @@ proc drawTextWrapped*(r: Renderer; x, y, width: float; text: string; c: Color; s
 
 proc textSize*(r: Renderer; text: string; size: float = 12.0; family: string = "sans"): (int, int) =
   raise newException(IOError, "gfx.textSize: text needs a Cairo backend (-d:useCairo)")
+
+proc windowSize*(w: Window): (int, int) =
+  var ww, wh: cint
+  discard SDL_GetWindowSize(cast[ptr SDL_Window](w), addr ww, addr wh)
+  (int(ww), int(wh))
+
+proc maximize*(w: Window) =
+  discard SDL_MaximizeWindow(cast[ptr SDL_Window](w))
+
+proc setFullscreen*(w: Window; fs: bool) =
+  discard SDL_SetWindowFullscreen(cast[ptr SDL_Window](w), fs)
+
+proc setLogicalSize*(r: Renderer; w, h: float) =
+  gLogW = w; gLogH = h
+  discard SDL_SetRenderLogicalPresentation(cast[ptr SDL_Renderer](r), cint(w), cint(h), SDL_LOGICAL_PRESENTATION_LETTERBOX)
 
 proc ticks*(): int =
   sdlTicks()

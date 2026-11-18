@@ -19,6 +19,7 @@ type
     surface: ptr cairo_surface_t
     cr: ptr cairo_t
     layout: ptr PangoLayout
+    window: ptr SDL_Window
     width, height: int
 
 proc toR(r: Renderer): ptr CairoRendererObj =
@@ -40,10 +41,12 @@ proc openWindow*(title: string; w, h: int): (Window, Renderer) =
   obj.texture = tex
   obj.surface = surface
   obj.cr = cr
+  obj.window = win
   obj.layout = pango_cairo_create_layout(cr)
   pango_cairo_context_set_resolution(pango_layout_get_context(obj.layout), 72.0)
   obj.width = w
   obj.height = h
+  gWinW = w; gWinH = h
   (cast[Window](win), cast[Renderer](obj))
 
 proc close*(w: Window; r: Renderer) =
@@ -65,11 +68,19 @@ proc setSource(r: Renderer; c: Color) =
     float(c.r) / 255.0, float(c.g) / 255.0, float(c.b) / 255.0, float(c.a) / 255.0)
 
 proc clear*(r: Renderer; c: Color) =
-  let cr = toR(r).cr
+  let o = toR(r)
+  let cr = o.cr
   setSource(r, c)
   cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE)
+  cairo_identity_matrix(cr)
   cairo_paint(cr)
   cairo_set_operator(cr, CAIRO_OPERATOR_OVER)
+  if gLogW > 0.0 and gLogH > 0.0 and o.width > 0 and o.height > 0:
+    let scale = min(float(o.width) / gLogW, float(o.height) / gLogH)
+    let offX = (float(o.width) - gLogW * scale) / 2.0
+    let offY = (float(o.height) - gLogH * scale) / 2.0
+    cairo_translate(cr, offX, offY)
+    cairo_scale(cr, scale, scale)
 
 proc fillRect*(r: Renderer; x, y, w, h: float; c: Color) =
   let cr = toR(r).cr
@@ -117,6 +128,21 @@ proc roundedRect*(r: Renderer; x, y, w, h, radius: float; c: Color) =
 
 proc present*(r: Renderer) =
   let o = toR(r)
+  var ww, wh: cint
+  discard SDL_GetWindowSize(cast[ptr SDL_Window](o.window), addr ww, addr wh)
+  if int(ww) != o.width or int(wh) != o.height:
+    if o.cr != nil: cairo_destroy(o.cr)
+    if o.surface != nil: cairo_surface_destroy(o.surface)
+    if o.texture != nil: SDL_DestroyTexture(o.texture)
+    o.texture = SDL_CreateTexture(o.sdlRenderer, SDL_PIXELFORMAT_ARGB8888,
+      SDL_TEXTUREACCESS_STREAMING, ww, wh)
+    o.surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, ww, wh)
+    o.cr = cairo_create(o.surface)
+    if o.layout != nil: g_object_unref(cast[pointer](o.layout))
+    o.layout = pango_cairo_create_layout(o.cr)
+    pango_cairo_context_set_resolution(pango_layout_get_context(o.layout), 72.0)
+    o.width = int(ww); o.height = int(wh)
+    gWinW = int(ww); gWinH = int(wh)
   cairo_surface_flush(o.surface)
   let pixels = cairo_image_surface_get_data(o.surface)
   let stride = cairo_image_surface_get_stride(o.surface)
@@ -167,6 +193,20 @@ proc textSize*(r: Renderer; text: string; size: float = 12.0; family: string = "
   var w, h: cint
   pango_layout_get_pixel_size(layout, addr w, addr h)
   (int(w), int(h))
+
+proc windowSize*(w: Window): (int, int) =
+  var ww, wh: cint
+  discard SDL_GetWindowSize(cast[ptr SDL_Window](w), addr ww, addr wh)
+  (int(ww), int(wh))
+
+proc maximize*(w: Window) =
+  discard SDL_MaximizeWindow(cast[ptr SDL_Window](w))
+
+proc setFullscreen*(w: Window; fs: bool) =
+  discard SDL_SetWindowFullscreen(cast[ptr SDL_Window](w), fs)
+
+proc setLogicalSize*(r: Renderer; w, h: float) =
+  gLogW = w; gLogH = h
 
 proc ticks*(): int =
   sdlTicks()

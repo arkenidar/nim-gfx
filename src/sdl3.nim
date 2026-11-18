@@ -43,6 +43,7 @@ const
   # SDL pixel format / texture access (used by the Cairo backend).
   SDL_PIXELFORMAT_ARGB8888*    = 0x16362004'u32
   SDL_TEXTUREACCESS_STREAMING* = 1'i32
+  SDL_LOGICAL_PRESENTATION_LETTERBOX* = 2'i32
 
 type
   SDL_Window*   = object
@@ -158,6 +159,10 @@ proc SDL_CreateTexture*(renderer: ptr SDL_Renderer; format: uint32; access: cint
 proc SDL_UpdateTexture*(texture: ptr SDL_Texture; rect, pixels: pointer; pitch: cint): bool {.importc, cdecl.}
 proc SDL_RenderTexture*(renderer: ptr SDL_Renderer; texture: ptr SDL_Texture; srcrect, dstrect: pointer): bool {.importc, cdecl.}
 proc SDL_DestroyTexture*(texture: ptr SDL_Texture) {.importc, cdecl.}
+proc SDL_GetWindowSize*(window: ptr SDL_Window; w, h: ptr cint): bool {.importc, cdecl.}
+proc SDL_MaximizeWindow*(window: ptr SDL_Window): bool {.importc, cdecl.}
+proc SDL_SetWindowFullscreen*(window: ptr SDL_Window; fullscreen: bool): bool {.importc, cdecl.}
+proc SDL_SetRenderLogicalPresentation*(renderer: ptr SDL_Renderer; w, h: cint; mode: cint): bool {.importc, cdecl.}
 
 # --- shared window/input helpers (used by both gfx backends) ---
 
