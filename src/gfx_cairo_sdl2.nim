@@ -11,6 +11,9 @@ include sdl2_events  # pollEvent*, toKey, toButton
 
 const PI = 3.14159265358979323846
 
+var gLastDmW: cint = -1  # -1 = unset; tracks display size for rotation (WM case)
+var gLastDmH: cint = -1
+
 type
   CairoRendererObj = object
     sdlRenderer: ptr SDL_Renderer
@@ -127,16 +130,25 @@ proc roundedRect*(r: Renderer; x, y, w, h, radius: float; c: Color) =
 proc present*(r: Renderer) =
   let o = toR(r)
   if termuxDetected():
-    # Track the display so screen rotation (orientation change) resizes the
-    # window; the fixed logical canvas is re-letterboxed by the resize below.
     var dm: SDL_DisplayMode
     if SDL_GetCurrentDisplayMode(0, addr dm) == 0 and dm.w > 0 and dm.h > 0:
-      var cw, ch: cint
-      SDL_GetWindowSize(cast[ptr SDL_Window](o.window), addr cw, addr ch)
-      if cw != dm.w or ch != dm.h:
-        SDL_SetWindowSize(cast[ptr SDL_Window](o.window), dm.w, dm.h)
-        SDL_SetWindowPosition(cast[ptr SDL_Window](o.window),
-          SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED)
+      if sdl2WmPresent(o.window):
+        # A WM manages the window: on display change (rotation) force a
+        # re-maximize for the new orientation.
+        if dm.w != gLastDmW or dm.h != gLastDmH:
+          let first = gLastDmW < 0
+          gLastDmW = dm.w; gLastDmH = dm.h
+          if not first:
+            SDL_RestoreWindow(o.window)
+            SDL_MaximizeWindow(o.window)
+      else:
+        # No WM: manually resize to the display and center.
+        var cw, ch: cint
+        SDL_GetWindowSize(o.window, addr cw, addr ch)
+        if cw != dm.w or ch != dm.h:
+          SDL_SetWindowSize(o.window, dm.w, dm.h)
+          SDL_SetWindowPosition(o.window, SDL_WINDOWPOS_CENTERED,
+            SDL_WINDOWPOS_CENTERED)
   var ww, wh: cint
   SDL_GetWindowSize(cast[ptr SDL_Window](o.window), addr ww, addr wh)
   if int(ww) != o.width or int(wh) != o.height:

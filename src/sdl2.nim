@@ -158,6 +158,8 @@ proc SDL_DestroyTexture*(texture: ptr SDL_Texture) {.importc, cdecl.}
 proc SDL_GetWindowSize*(window: ptr SDL_Window; w, h: ptr cint) {.importc, cdecl.}
 proc SDL_SetWindowSize*(window: ptr SDL_Window; w, h: cint) {.importc, cdecl.}
 proc SDL_SetWindowPosition*(window: ptr SDL_Window; x, y: cint) {.importc, cdecl.}
+proc SDL_GetWindowBordersSize*(window: ptr SDL_Window; top, left, bottom, right: ptr cint): cint {.importc, cdecl.}
+proc SDL_RestoreWindow*(window: ptr SDL_Window) {.importc, cdecl.}
 proc SDL_GetCurrentDisplayMode*(displayIndex: cint; mode: ptr SDL_DisplayMode): cint {.importc, cdecl.}
 proc SDL_MaximizeWindow*(window: ptr SDL_Window) {.importc, cdecl.}
 proc SDL_SetWindowFullscreen*(window: ptr SDL_Window; flags: uint32): cint {.importc, cdecl.}
@@ -178,24 +180,34 @@ else:
 # --- shared helpers (used by the Cairo-on-SDL2 backend) ---
 
 proc termuxDetected*(): bool =
-  ## True when running under Termux (Termux:X11 has no window manager, so the
-  ## window must be sized to the display to fill the screen).
+  ## True when running under Termux (Termux:X11).
   getEnv("TERMUX_VERSION") != ""
+
+proc sdl2WmPresent*(window: ptr SDL_Window): bool =
+  ## True when a window manager is decorating/managing this window (detected via
+  ## the WM-added border/title-bar size).
+  var top, left, bottom, right: cint
+  discard SDL_GetWindowBordersSize(window, addr top, addr left, addr bottom, addr right)
+  top > 0 or left > 0 or bottom > 0 or right > 0
 
 proc initSdl2Window*(title: string; w, h: int): (ptr SDL_Window, ptr SDL_Renderer) =
   if SDL_Init(SDL_INIT_VIDEO) != 0:
     raise newException(IOError, "SDL_Init failed: " & $SDL_GetError())
-  var ww = cint(w)
-  var wh = cint(h)
-  var pos = SDL_WINDOWPOS_UNDEFINED
+  let win = SDL_CreateWindow(title.cstring, SDL_WINDOWPOS_UNDEFINED,
+    SDL_WINDOWPOS_UNDEFINED, cint(w), cint(h), SDL_WINDOW_RESIZABLE)
+  if win.isNil:
+    SDL_Quit()
+    raise newException(IOError, "SDL_CreateWindow failed: " & $SDL_GetError())
   if termuxDetected():
-    # Termux:X11 has no window manager: auto-size the window to the display and
-    # center it so the app fills the screen (matching rememe).
-    pos = SDL_WINDOWPOS_CENTERED
-    var dm: SDL_DisplayMode
-    if SDL_GetCurrentDisplayMode(0, addr dm) == 0 and dm.w > 0 and dm.h > 0:
-      ww = dm.w; wh = dm.h
-  let win = SDL_CreateWindow(title.cstring, pos, pos, ww, wh, SDL_WINDOW_RESIZABLE)
+    if sdl2WmPresent(win):
+      # A WM (e.g. openbox) manages the window: maximize to fill the work area.
+      SDL_MaximizeWindow(win)
+    else:
+      # No WM: auto-size the window to the display and center it (rememe model).
+      var dm: SDL_DisplayMode
+      if SDL_GetCurrentDisplayMode(0, addr dm) == 0 and dm.w > 0 and dm.h > 0:
+        SDL_SetWindowSize(win, dm.w, dm.h)
+        SDL_SetWindowPosition(win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED)
   if win.isNil:
     SDL_Quit()
     raise newException(IOError, "SDL_CreateWindow failed: " & $SDL_GetError())

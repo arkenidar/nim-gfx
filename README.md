@@ -185,9 +185,10 @@ git clone https://github.com/arkenidar/nim-gfx && cd nim-gfx
 nim c -r examples/textdemo.nim
 ```
 
-On Termux the window auto-sizes to the display and centers itself (Termux:X11
-has no window manager), and on screen rotation it re-sizes + re-centers so the
-app keeps filling the screen; the fixed logical canvas re-letterboxes itself.
+On Termux the window fills the screen either way: without a WM it auto-sizes
+to the display and centers itself, and with a WM (e.g. `openbox`) it stays
+maximized — re-maximizing on screen rotation. The fixed logical canvas
+re-letterboxes itself.
 
 For the fullscreen toggle (`F`) and WM-managed rotation, install a lightweight
 window manager (`pkg install openbox`) and start it before your app —
