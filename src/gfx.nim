@@ -60,34 +60,22 @@ proc gray*(v: uint8, a: uint8 = 255): Color {.inline.} = rgb(v, v, v, a)
 # --- logical coordinate system (shared by all backends) ---
 # gLogW/gLogH = logical canvas size (0 = not set: draw/input in window pixels).
 # gWinW/gWinH = current window size (set by openWindow, updated on resize).
-# gScaleMode  = how the logical canvas maps onto the window (FILL by default).
-
-type
-  ScaleMode* = enum
-    scaleCover     ## object-fit: cover — fill, preserve aspect, crop overflow (DEFAULT)
-    scaleContain   ## object-fit: contain — fit, preserve aspect, letterbox bars
-    scaleFill      ## object-fit: fill — stretch to fill (distorts)
+# The canvas is always letterboxed (fit, preserve aspect) into the window —
+# rememe's model: one fixed canvas, one mapping, no modes.
 
 var gLogW = 0.0
 var gLogH = 0.0
 var gWinW = 0
 var gWinH = 0
-var gScaleMode = scaleCover
 
 proc toLogical*(x, y: float): (float, float) =
-  ## Inverse of the logical->window transform: window pixel -> logical coord.
+  ## Inverse of the letterbox transform: window pixel -> logical coord.
   if gLogW <= 0.0 or gLogH <= 0.0 or gWinW <= 0 or gWinH <= 0:
     return (x, y)
-  case gScaleMode
-  of scaleFill:
-    (x / (float(gWinW) / gLogW), y / (float(gWinH) / gLogH))
-  else:
-    let s =
-      if gScaleMode == scaleCover: max(float(gWinW) / gLogW, float(gWinH) / gLogH)
-      else: min(float(gWinW) / gLogW, float(gWinH) / gLogH)
-    let offX = (float(gWinW) - gLogW * s) / 2.0
-    let offY = (float(gWinH) - gLogH * s) / 2.0
-    ((x - offX) / s, (y - offY) / s)
+  let s = min(float(gWinW) / gLogW, float(gWinH) / gLogH)
+  let offX = (float(gWinW) - gLogW * s) / 2.0
+  let offY = (float(gWinH) - gLogH * s) / 2.0
+  ((x - offX) / s, (y - offY) / s)
 
 when defined(useCairo):
   when defined(useSdl2):

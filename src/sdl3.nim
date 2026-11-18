@@ -44,9 +44,7 @@ const
   # SDL pixel format / texture access (used by the Cairo backend).
   SDL_PIXELFORMAT_ARGB8888*    = 0x16362004'u32
   SDL_TEXTUREACCESS_STREAMING* = 1'i32
-  SDL_LOGICAL_PRESENTATION_STRETCH*   = 1'i32
   SDL_LOGICAL_PRESENTATION_LETTERBOX* = 2'i32
-  SDL_LOGICAL_PRESENTATION_OVERSCAN*  = 3'i32
 
 type
   SDL_Window*   = object

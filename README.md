@@ -4,8 +4,8 @@ A small, backend-agnostic graphics facade for Nim: a window + renderer, colors,
 drawing primitives, and input events — on top of raw SDL2/SDL3/Cairo FFI
 bindings (no third-party bindings package).
 
-This is the foundation layer for a Nim GUI / game stack: higher-level packages
-(widgets, layout, game views) import **only `gfx`** and never touch SDL.
+This is the foundation layer for a Nim GUI / game stack: higher-level layers
+(layout, views) import **only `gfx`** and never touch SDL.
 
 ## Roadmap
 
@@ -16,10 +16,10 @@ Dependencies are one-way: `gfx.*` never knows about `ui.*`.
 src/
   gfx...             # graphics + input (draw, pollEvent, clip, ...)
   ui/
-    layout.nim        # pure geometry + responsive layout (zero deps)
-    events.nim        # hit-testing + focus + mouse/touch routing
-    view.nim          # Screen (render/onEvent/onResize) + stack + overlays
-    patterns.nim      # the 3 recipes: button, scrollable pane, text input
+    events.nim        # shape hit-testing (hitRect / hitCircle / hitRoundedRect)
+    layout.nim        # (deferred — no design yet)
+    view.nim          # (deferred)
+    patterns.nim      # (deferred) button / scrollable pane / text input recipes
 ```
 
 | Area | Status |
@@ -27,10 +27,11 @@ src/
 | 4 backends (SDL2/SDL3/Cairo x2), explicit selection | done |
 | Input: key / mouse / text / wheel / touch(finger) / resize + clip rect | done |
 | Text: `drawText` / `drawTextWrapped` / `textSize` (via Pango) | done |
-| Logical scaling / letterbox (coordinate-based; draw + input consistent) | done |
+| Fixed logical canvas + letterbox (rememe's model; draw + input consistent) | done |
 | Window controls: `maximize` / `setFullscreen` / `windowSize` | done |
+| `ui/events`: shape hit-testing | done |
 | Clipboard (copy/paste) | next |
-| `ui/`: layout -> events -> view -> patterns | next |
+| `ui/layout` / `ui/view` / `ui/patterns` | deferred (no design yet) |
 
 No widget framework: screens draw + hit-test inline; `ui/patterns.nim` holds the
 three most useful recipes.
@@ -46,8 +47,9 @@ three most useful recipes.
 
 There is **no default backend** — a build must pass one of the flags above.
 
-The public API is identical regardless of backend; coordinates are window
-pixels.
+The public API is identical regardless of backend. Coordinates are logical
+after `setLogicalSize` — a fixed canvas, letterboxed into the window (rememe's
+model: one canvas, one mapping, no modes). Without it they are window pixels.
 
 ## API
 
@@ -59,33 +61,42 @@ type Key              # keyNone, keyBackspace, keyTab, keyEnter, keyEscape,
                       # keySpace, keyDelete, keyLeft/Right/Up/Down, keyHome/keyEnd,
                       # keyA..keyZ, key0..key9
 type Button           # btnNone, btnLeft, btnMiddle, btnRight
-type EventKind        # evNone, evQuit, evKeyDown, evKeyUp, evMouseDown,
-                      # evMouseUp, evMouseMotion, evTextInput
-type Event            # { kind, key, button, mouseX, mouseY, text }
+type EventKind        # evNone, evQuit, evKeyDown/Up, evMouseDown/Up/Motion/Wheel,
+                      # evTextInput, evFingerDown/Up/Motion, evResize
+type Event            # { kind, key, button, mouseX/Y, wheelX/Y, text,
+                      #   fingerId, fingerX/Y/Dx/Dy/pressure, resizeW/H }
 
 # colors
 proc rgb(r, g, b: uint8, a: uint8 = 255): Color
-proc black(a: uint8 = 255): Color
-proc white(a: uint8 = 255): Color
-proc gray(v: uint8, a: uint8 = 255): Color
+proc black/white/gray(a: uint8 = 255): Color
 
 # lifecycle
 proc openWindow(title: string, w, h: int): (Window, Renderer)
 proc close(w: Window, r: Renderer)
 proc shutdown()
 
+# window controls
+proc windowSize(w: Window): (int, int)
+proc maximize(w: Window)
+proc setFullscreen(w: Window, fs: bool)
+
+# logical canvas (fixed, letterboxed into the window)
+proc setLogicalSize(r: Renderer, w, h: float)
+
 # drawing
-proc clear(r: Renderer, c: Color)
-proc fillRect(r: Renderer, x, y, w, h: float, c: Color)
-proc drawLine(r: Renderer, x1, y1, x2, y2: float, c: Color)
-proc drawCircle(r: Renderer, cx, cy, radius: float, c: Color)
-proc drawCircleOutline(r: Renderer, cx, cy, radius: float, c: Color)
-proc roundedRect(r: Renderer, x, y, w, h, radius: float, c: Color)
+proc clear, fillRect, drawLine, drawCircle, drawCircleOutline, roundedRect
+proc setClipRect(r: Renderer, x, y, w, h: float)
+proc resetClip(r: Renderer)
 proc present(r: Renderer)
+
+# text (Cairo backends only)
+proc drawText(r, x, y, text, c, size = 12.0, family = "sans")
+proc drawTextWrapped(r, x, y, width, text, c, size, family)
+proc textSize(r, text, size, family): (int, int)
 
 # time + input
 proc ticks(): int
-proc pollEvent(): Option[Event]   # returns the next meaningful event, or none
+proc pollEvent(): Option[Event]
 ```
 
 ## Build & run
@@ -164,14 +175,18 @@ WINEPATH=<msys64>/mingw64/bin wine hello.exe
 
 ## Termux (Android)
 
-`nim` and `sdl2` are packaged; SDL3 isn't, so use the SDL2 backend (run under
-Termux:X11 with `DISPLAY=:0`):
+`nim`, `sdl2`, `sdl3` and `libcairo` are packaged (run under Termux:X11 with
+`DISPLAY=:0`):
 
 ```sh
-pkg install nim sdl2 git
+./scripts/termux-setup.sh        # nim, sdl2, sdl3, libcairo, pango, ttf-dejavu
 git clone https://github.com/arkenidar/nim-gfx && cd nim-gfx
-nim c -r -d:useSdl2 examples/hello.nim
+nim c -r -d:useSdl2 -d:useCairo examples/textdemo.nim
 ```
+
+To make the window fill the whole Android screen, set Termux:X11's display
+resolution to match the device and enable fullscreen/immersive in its settings —
+that is an Android-app setting, not a nim-gfx code setting.
 
 ## Layout
 
