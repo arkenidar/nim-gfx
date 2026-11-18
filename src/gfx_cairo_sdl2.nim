@@ -11,8 +11,7 @@ include sdl2_events  # pollEvent*, toKey, toButton
 
 const PI = 3.14159265358979323846
 
-var gLastDmW: cint = -1  # -1 = unset; tracks display size for rotation (WM case)
-var gLastDmH: cint = -1
+var gHasWM = false  # cached: a WM is managing the window (detected at runtime)
 
 type
   CairoRendererObj = object
@@ -29,6 +28,16 @@ proc toR(r: Renderer): ptr CairoRendererObj =
 
 proc openWindow*(title: string; w, h: int): (Window, Renderer) =
   let (win, ren) = initSdl2Window(title, w, h)
+  if termuxDetected():
+    # Fill the screen: maximize under a WM, or size to the display without one.
+    gHasWM = sdl2WmPresent(win)
+    if gHasWM:
+      SDL_MaximizeWindow(win)
+    else:
+      var dm: SDL_DisplayMode
+      if SDL_GetCurrentDisplayMode(0, addr dm) == 0 and dm.w > 0 and dm.h > 0:
+        SDL_SetWindowSize(win, dm.w, dm.h)
+        SDL_SetWindowPosition(win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED)
   let tex = SDL_CreateTexture(ren, SDL_PIXELFORMAT_ARGB8888,
     SDL_TEXTUREACCESS_STREAMING, cint(w), cint(h))
   if tex.isNil:
@@ -130,19 +139,19 @@ proc roundedRect*(r: Renderer; x, y, w, h, radius: float; c: Color) =
 proc present*(r: Renderer) =
   let o = toR(r)
   if termuxDetected():
-    var dm: SDL_DisplayMode
-    if SDL_GetCurrentDisplayMode(0, addr dm) == 0 and dm.w > 0 and dm.h > 0:
-      if sdl2WmPresent(o.window):
-        # A WM manages the window: on display change (rotation) force a
-        # re-maximize for the new orientation.
-        if dm.w != gLastDmW or dm.h != gLastDmH:
-          let first = gLastDmW < 0
-          gLastDmW = dm.w; gLastDmH = dm.h
-          if not first:
-            SDL_RestoreWindow(o.window)
-            SDL_MaximizeWindow(o.window)
-      else:
-        # No WM: manually resize to the display and center.
+    if not gHasWM and sdl2WmPresent(o.window):
+      gHasWM = true  # borders appeared → a WM is managing the window
+    if gHasWM:
+      # Keep the window maximized (fills the screen) — covers startup, rotation
+      # and exiting fullscreen, all of which can drop the maximized state.
+      let flags = SDL_GetWindowFlags(o.window)
+      if (flags and SDL_WINDOW_FULLSCREEN) == 0'u32 and
+         (flags and SDL_WINDOW_MAXIMIZED) == 0'u32:
+        SDL_MaximizeWindow(o.window)
+    else:
+      # No WM: manually resize to the display and center.
+      var dm: SDL_DisplayMode
+      if SDL_GetCurrentDisplayMode(0, addr dm) == 0 and dm.w > 0 and dm.h > 0:
         var cw, ch: cint
         SDL_GetWindowSize(o.window, addr cw, addr ch)
         if cw != dm.w or ch != dm.h:

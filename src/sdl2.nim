@@ -50,6 +50,8 @@ const
 
   SDL_PIXELFORMAT_ARGB8888*    = 0x16362004'u32
   SDL_TEXTUREACCESS_STREAMING* = 1'i32
+  SDL_WINDOW_FULLSCREEN*        = 0x00000001'u32
+  SDL_WINDOW_MAXIMIZED*         = 0x00000080'u32
   SDL_WINDOW_FULLSCREEN_DESKTOP* = 0x00001001'u32
 
 type
@@ -162,6 +164,7 @@ proc SDL_GetWindowBordersSize*(window: ptr SDL_Window; top, left, bottom, right:
 proc SDL_RestoreWindow*(window: ptr SDL_Window) {.importc, cdecl.}
 proc SDL_GetCurrentDisplayMode*(displayIndex: cint; mode: ptr SDL_DisplayMode): cint {.importc, cdecl.}
 proc SDL_MaximizeWindow*(window: ptr SDL_Window) {.importc, cdecl.}
+proc SDL_GetWindowFlags*(window: ptr SDL_Window): uint32 {.importc, cdecl.}
 proc SDL_SetWindowFullscreen*(window: ptr SDL_Window; flags: uint32): cint {.importc, cdecl.}
 proc SDL_PollEvent*(event: ptr SDL_Event): cint {.importc, cdecl.}
 proc SDL_StartTextInput*() {.importc, cdecl.}
@@ -195,19 +198,6 @@ proc initSdl2Window*(title: string; w, h: int): (ptr SDL_Window, ptr SDL_Rendere
     raise newException(IOError, "SDL_Init failed: " & $SDL_GetError())
   let win = SDL_CreateWindow(title.cstring, SDL_WINDOWPOS_UNDEFINED,
     SDL_WINDOWPOS_UNDEFINED, cint(w), cint(h), SDL_WINDOW_RESIZABLE)
-  if win.isNil:
-    SDL_Quit()
-    raise newException(IOError, "SDL_CreateWindow failed: " & $SDL_GetError())
-  if termuxDetected():
-    if sdl2WmPresent(win):
-      # A WM (e.g. openbox) manages the window: maximize to fill the work area.
-      SDL_MaximizeWindow(win)
-    else:
-      # No WM: auto-size the window to the display and center it (rememe model).
-      var dm: SDL_DisplayMode
-      if SDL_GetCurrentDisplayMode(0, addr dm) == 0 and dm.w > 0 and dm.h > 0:
-        SDL_SetWindowSize(win, dm.w, dm.h)
-        SDL_SetWindowPosition(win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED)
   if win.isNil:
     SDL_Quit()
     raise newException(IOError, "SDL_CreateWindow failed: " & $SDL_GetError())
