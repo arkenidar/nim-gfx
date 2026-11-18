@@ -6,6 +6,7 @@
 
 const
   SDL_INIT_VIDEO* = 0x00000020'u32
+  SDL_WINDOW_RESIZABLE* = 0x00000020'u32
 
   SDL_EVENT_QUIT*            = 0x00000100'u32
   SDL_EVENT_WINDOW*          = 0x00000200'u32
@@ -179,7 +180,7 @@ proc initSdl2Window*(title: string; w, h: int): (ptr SDL_Window, ptr SDL_Rendere
   if SDL_Init(SDL_INIT_VIDEO) != 0:
     raise newException(IOError, "SDL_Init failed: " & $SDL_GetError())
   let win = SDL_CreateWindow(title.cstring, SDL_WINDOWPOS_UNDEFINED,
-    SDL_WINDOWPOS_UNDEFINED, cint(w), cint(h), 0'u32)
+    SDL_WINDOWPOS_UNDEFINED, cint(w), cint(h), SDL_WINDOW_RESIZABLE)
   if win.isNil:
     SDL_Quit()
     raise newException(IOError, "SDL_CreateWindow failed: " & $SDL_GetError())
