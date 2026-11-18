@@ -72,6 +72,18 @@ nim c -r -d:useSdl2 -d:useCairo examples/hello.nim    # Cairo on SDL2
 
 A window opens, draws a few primitives, and closes on `Esc` or the window ✕.
 
+## Build all backends (scripts)
+
+```sh
+./scripts/build-all.sh       # 4 native binaries -> bin/
+./scripts/build-all-win.sh   # 4 Windows .exe -> bin/ (cross-compile for Wine)
+```
+
+`build-all-win.sh` cross-compiles from Linux; it needs `gcc-mingw-w64-x86-64`
+and the MSYS2 import libs (override `MSYS2_MINGW_LIB` if your MSYS2 is elsewhere).
+
+On Termux: `./scripts/termux-setup.sh`, then `./scripts/build-all.sh`.
+
 ## Windows (MSYS2 MinGW64)
 
 On Windows, the easiest native build is via MSYS2's **MinGW64** environment.

@@ -6,6 +6,7 @@
 # `std/options` import are already in scope.
 
 import ./sdl2
+import std/math
 include sdl2_events  # pollEvent*, toKey, toButton (shared with the Cairo-on-SDL2 backend)
 
 const PI = 3.14159265358979323846

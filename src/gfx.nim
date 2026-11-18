@@ -14,7 +14,6 @@
 # All coordinates are window pixels.
 
 import std/options
-import std/math
 
 type
   Color* = object

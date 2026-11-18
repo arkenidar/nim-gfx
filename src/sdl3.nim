@@ -145,6 +145,8 @@ proc sdlTicks*(): int =
 
 when defined(windows):
   {.passL: "-Wl,-Bstatic -lSDL3 -Wl,-Bdynamic -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8".}
+elif defined(android) or defined(termux):
+  {.passL: "-lSDL3 -lm".}
 elif defined(linux):
   {.passL: "-L/usr/local/lib -Wl,-Bstatic -lSDL3 -Wl,-Bdynamic -pthread -lm".}
 else:
