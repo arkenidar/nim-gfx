@@ -76,11 +76,14 @@ proc clear*(r: Renderer; c: Color) =
   cairo_paint(cr)
   cairo_set_operator(cr, CAIRO_OPERATOR_OVER)
   if gLogW > 0.0 and gLogH > 0.0 and o.width > 0 and o.height > 0:
-    let scale = min(float(o.width) / gLogW, float(o.height) / gLogH)
-    let offX = (float(o.width) - gLogW * scale) / 2.0
-    let offY = (float(o.height) - gLogH * scale) / 2.0
-    cairo_translate(cr, offX, offY)
-    cairo_scale(cr, scale, scale)
+    if gScaleMode == scaleStretch:
+      cairo_scale(cr, float(o.width) / gLogW, float(o.height) / gLogH)
+    else:
+      let scale = min(float(o.width) / gLogW, float(o.height) / gLogH)
+      let offX = (float(o.width) - gLogW * scale) / 2.0
+      let offY = (float(o.height) - gLogH * scale) / 2.0
+      cairo_translate(cr, offX, offY)
+      cairo_scale(cr, scale, scale)
 
 proc fillRect*(r: Renderer; x, y, w, h: float; c: Color) =
   let cr = toR(r).cr
@@ -205,8 +208,8 @@ proc maximize*(w: Window) =
 proc setFullscreen*(w: Window; fs: bool) =
   discard SDL_SetWindowFullscreen(cast[ptr SDL_Window](w), fs)
 
-proc setLogicalSize*(r: Renderer; w, h: float) =
-  gLogW = w; gLogH = h
+proc setLogicalSize*(r: Renderer; w, h: float; mode: ScaleMode = scaleStretch) =
+  gLogW = w; gLogH = h; gScaleMode = mode
 
 proc ticks*(): int =
   sdlTicks()

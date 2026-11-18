@@ -104,9 +104,10 @@ proc maximize*(w: Window) =
 proc setFullscreen*(w: Window; fs: bool) =
   discard SDL_SetWindowFullscreen(cast[ptr SDL_Window](w), fs)
 
-proc setLogicalSize*(r: Renderer; w, h: float) =
-  gLogW = w; gLogH = h
-  discard SDL_SetRenderLogicalPresentation(cast[ptr SDL_Renderer](r), cint(w), cint(h), SDL_LOGICAL_PRESENTATION_LETTERBOX)
+proc setLogicalSize*(r: Renderer; w, h: float; mode: ScaleMode = scaleStretch) =
+  gLogW = w; gLogH = h; gScaleMode = mode
+  let pm = if mode == scaleStretch: SDL_LOGICAL_PRESENTATION_STRETCH else: SDL_LOGICAL_PRESENTATION_LETTERBOX
+  discard SDL_SetRenderLogicalPresentation(cast[ptr SDL_Renderer](r), cint(w), cint(h), pm)
 
 proc ticks*(): int =
   sdlTicks()
