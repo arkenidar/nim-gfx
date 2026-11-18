@@ -45,6 +45,10 @@ Coordinates are logical after `setLogicalSize` — a fixed canvas, letterboxed
 into the window (rememe's model: one canvas, one mapping, no modes). Without it
 they are window pixels.
 
+For a responsive layout, re-call `setLogicalSize` from the `evResize` handler
+with a canvas matching the new window orientation (e.g. portrait 480x640 vs
+landscape 640x480) and re-layout your content — see the examples.
+
 Text renders through Pango pinned to its **FreeType/fontconfig** backend — not
 Windows' win32/DirectWrite backend, which scrambles glyphs when rasterizing onto
 a Cairo *image* surface (our blit path). This also keeps glyphs pixel-identical
