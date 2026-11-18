@@ -26,6 +26,7 @@ const
 
   SDL_WINDOWEVENT_CLOSE* = 14'u8
   SDL_WINDOWPOS_UNDEFINED* = 0x1FFF0000'i32
+  SDL_WINDOWPOS_CENTERED*  = 0x2FFF0000'i32
 
   # SDL virtual keycodes (SDL_Keycode).
   SDLK_RETURN*    = 0x0000000d'u32
@@ -156,6 +157,7 @@ proc SDL_UpdateTexture*(texture: ptr SDL_Texture; rect: ptr SDL_Rect; pixels: po
 proc SDL_DestroyTexture*(texture: ptr SDL_Texture) {.importc, cdecl.}
 proc SDL_GetWindowSize*(window: ptr SDL_Window; w, h: ptr cint) {.importc, cdecl.}
 proc SDL_SetWindowSize*(window: ptr SDL_Window; w, h: cint) {.importc, cdecl.}
+proc SDL_SetWindowPosition*(window: ptr SDL_Window; x, y: cint) {.importc, cdecl.}
 proc SDL_GetCurrentDisplayMode*(displayIndex: cint; mode: ptr SDL_DisplayMode): cint {.importc, cdecl.}
 proc SDL_MaximizeWindow*(window: ptr SDL_Window) {.importc, cdecl.}
 proc SDL_SetWindowFullscreen*(window: ptr SDL_Window; flags: uint32): cint {.importc, cdecl.}
@@ -185,14 +187,15 @@ proc initSdl2Window*(title: string; w, h: int): (ptr SDL_Window, ptr SDL_Rendere
     raise newException(IOError, "SDL_Init failed: " & $SDL_GetError())
   var ww = cint(w)
   var wh = cint(h)
+  var pos = SDL_WINDOWPOS_UNDEFINED
   if termuxDetected():
-    # Termux:X11 has no window manager: auto-size the window to the display so
-    # the app fills the screen (matching rememe), keeping a resizable border.
+    # Termux:X11 has no window manager: auto-size the window to the display and
+    # center it so the app fills the screen (matching rememe).
+    pos = SDL_WINDOWPOS_CENTERED
     var dm: SDL_DisplayMode
     if SDL_GetCurrentDisplayMode(0, addr dm) == 0 and dm.w > 0 and dm.h > 0:
       ww = dm.w; wh = dm.h
-  let win = SDL_CreateWindow(title.cstring, SDL_WINDOWPOS_UNDEFINED,
-    SDL_WINDOWPOS_UNDEFINED, ww, wh, SDL_WINDOW_RESIZABLE)
+  let win = SDL_CreateWindow(title.cstring, pos, pos, ww, wh, SDL_WINDOW_RESIZABLE)
   if win.isNil:
     SDL_Quit()
     raise newException(IOError, "SDL_CreateWindow failed: " & $SDL_GetError())

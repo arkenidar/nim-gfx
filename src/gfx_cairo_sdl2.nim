@@ -135,6 +135,8 @@ proc present*(r: Renderer) =
       SDL_GetWindowSize(cast[ptr SDL_Window](o.window), addr cw, addr ch)
       if cw != dm.w or ch != dm.h:
         SDL_SetWindowSize(cast[ptr SDL_Window](o.window), dm.w, dm.h)
+        SDL_SetWindowPosition(cast[ptr SDL_Window](o.window),
+          SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED)
   var ww, wh: cint
   SDL_GetWindowSize(cast[ptr SDL_Window](o.window), addr ww, addr wh)
   if int(ww) != o.width or int(wh) != o.height:

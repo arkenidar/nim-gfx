@@ -181,9 +181,9 @@ git clone https://github.com/arkenidar/nim-gfx && cd nim-gfx
 nim c -r examples/textdemo.nim
 ```
 
-On Termux the window auto-sizes to the display (Termux:X11 has no window
-manager) and tracks the display on screen rotation, so the app fills the screen;
-the fixed logical canvas is re-letterboxed automatically.
+On Termux the window auto-sizes to the display and centers itself (Termux:X11
+has no window manager), and on screen rotation it re-sizes + re-centers so the
+app keeps filling the screen; the fixed logical canvas re-letterboxes itself.
 
 ## Layout
 
