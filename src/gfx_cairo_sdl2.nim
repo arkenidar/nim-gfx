@@ -7,6 +7,7 @@
 
 import ./sdl2
 import ./cairo
+import ./pango
 include sdl2_events  # pollEvent*, toKey, toButton
 
 const PI = 3.14159265358979323846
@@ -17,6 +18,7 @@ type
     texture: ptr SDL_Texture
     surface: ptr cairo_surface_t
     cr: ptr cairo_t
+    layout: ptr PangoLayout
     width, height: int
 
 proc toR(r: Renderer): ptr CairoRendererObj =
@@ -38,6 +40,8 @@ proc openWindow*(title: string; w, h: int): (Window, Renderer) =
   obj.texture = tex
   obj.surface = surface
   obj.cr = cr
+  obj.layout = pango_cairo_create_layout(cr)
+  pango_cairo_context_set_resolution(pango_layout_get_context(obj.layout), 72.0)
   obj.width = w
   obj.height = h
   (cast[Window](win), cast[Renderer](obj))
@@ -45,6 +49,7 @@ proc openWindow*(title: string; w, h: int): (Window, Renderer) =
 proc close*(w: Window; r: Renderer) =
   let o = toR(r)
   if o != nil:
+    if o.layout != nil: g_object_unref(cast[pointer](o.layout))
     if o.cr != nil: cairo_destroy(o.cr)
     if o.surface != nil: cairo_surface_destroy(o.surface)
     if o.texture != nil: SDL_DestroyTexture(o.texture)
@@ -126,6 +131,42 @@ proc setClipRect*(r: Renderer; x, y, w, h: float) =
 
 proc resetClip*(r: Renderer) =
   cairo_reset_clip(toR(r).cr)
+
+proc setFont(layout: ptr PangoLayout; size: float; family: string) =
+  let desc = pango_font_description_new()
+  pango_font_description_set_family(desc, family.cstring)
+  pango_font_description_set_size(desc, cint(size * float(PANGO_SCALE)))
+  pango_layout_set_font_description(layout, desc)
+  pango_font_description_free(desc)
+
+proc drawText*(r: Renderer; x, y: float; text: string; c: Color; size: float = 12.0; family: string = "sans") =
+  let cr = toR(r).cr
+  let layout = toR(r).layout
+  setSource(r, c)
+  setFont(layout, size, family)
+  pango_layout_set_width(layout, -1)
+  pango_layout_set_text(layout, text.cstring, -1)
+  cairo_move_to(cr, x, y)
+  pango_cairo_show_layout(cr, layout)
+
+proc drawTextWrapped*(r: Renderer; x, y, width: float; text: string; c: Color; size: float = 12.0; family: string = "sans") =
+  let cr = toR(r).cr
+  let layout = toR(r).layout
+  setSource(r, c)
+  setFont(layout, size, family)
+  pango_layout_set_width(layout, cint(width * float(PANGO_SCALE)))
+  pango_layout_set_text(layout, text.cstring, -1)
+  cairo_move_to(cr, x, y)
+  pango_cairo_show_layout(cr, layout)
+
+proc textSize*(r: Renderer; text: string; size: float = 12.0; family: string = "sans"): (int, int) =
+  let layout = toR(r).layout
+  setFont(layout, size, family)
+  pango_layout_set_width(layout, -1)
+  pango_layout_set_text(layout, text.cstring, -1)
+  var w, h: cint
+  pango_layout_get_pixel_size(layout, addr w, addr h)
+  (int(w), int(h))
 
 proc ticks*(): int =
   sdl2Ticks()

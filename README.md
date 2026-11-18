@@ -26,7 +26,7 @@ src/
 |---|---|
 | 4 backends (SDL2/SDL3/Cairo x2), explicit selection | done |
 | Input: key / mouse / text / wheel / touch(finger) / resize + clip rect | done |
-| Text: `drawText` + `measureText` (via Cairo) | next |
+| Text: `drawText` / `drawTextWrapped` / `textSize` (via Pango) | next |
 | Clipboard (copy/paste) | next |
 | Logical scaling / letterbox (responsive layout) | next |
 | `ui/`: layout -> events -> view -> patterns | next |

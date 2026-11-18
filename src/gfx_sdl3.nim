@@ -83,5 +83,14 @@ proc setClipRect*(r: Renderer; x, y, w, h: float) =
 proc resetClip*(r: Renderer) =
   discard SDL_SetRenderClipRect(cast[ptr SDL_Renderer](r), nil)
 
+proc drawText*(r: Renderer; x, y: float; text: string; c: Color; size: float = 12.0; family: string = "sans") =
+  raise newException(IOError, "gfx.drawText: text needs a Cairo backend (-d:useCairo)")
+
+proc drawTextWrapped*(r: Renderer; x, y, width: float; text: string; c: Color; size: float = 12.0; family: string = "sans") =
+  raise newException(IOError, "gfx.drawTextWrapped: text needs a Cairo backend (-d:useCairo)")
+
+proc textSize*(r: Renderer; text: string; size: float = 12.0; family: string = "sans"): (int, int) =
+  raise newException(IOError, "gfx.textSize: text needs a Cairo backend (-d:useCairo)")
+
 proc ticks*(): int =
   sdlTicks()
