@@ -1,6 +1,6 @@
 # sdl_events.nim — shared SDL -> gfx facade input translation.
 #
-# This file is `include`d by the gfx backends (gfx_sdl.nim / gfx_cairo.nim), so
+# This file is `include`d by the gfx backend (gfx_cairo_sdl3.nim), so
 # the facade types (Event, Key, Button) and the `std/options` import are already
 # in scope. It provides pollEvent() plus the small key/button mappers.
 

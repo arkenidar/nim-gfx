@@ -57,9 +57,6 @@ type
   SDL_Rect* {.bycopy.} = object
     x*, y*, w*, h*: cint
 
-  SDL_FRect* {.bycopy.} = object
-    x*, y*, w*, h*: cfloat
-
   SDL_Keysym* {.bycopy.} = object
     scancode*: int32
     sym*: int32
@@ -144,13 +141,6 @@ type
 proc SDL_Init*(flags: uint32): cint {.importc, cdecl.}
 proc SDL_CreateWindow*(title: cstring; x, y, w, h: cint; flags: uint32): ptr SDL_Window {.importc, cdecl.}
 proc SDL_CreateRenderer*(window: ptr SDL_Window; index: cint; flags: uint32): ptr SDL_Renderer {.importc, cdecl.}
-proc SDL_SetRenderDrawColor*(renderer: ptr SDL_Renderer; r, g, b, a: uint8): cint {.importc, cdecl.}
-proc SDL_RenderClear*(renderer: ptr SDL_Renderer): cint {.importc, cdecl.}
-proc SDL_RenderFillRect*(renderer: ptr SDL_Renderer; rect: ptr SDL_Rect): cint {.importc, cdecl.}
-proc SDL_RenderFillRectF*(renderer: ptr SDL_Renderer; rect: ptr SDL_FRect): cint {.importc, cdecl.}
-proc SDL_RenderDrawLine*(renderer: ptr SDL_Renderer; x1, y1, x2, y2: cint): cint {.importc, cdecl.}
-proc SDL_RenderDrawLineF*(renderer: ptr SDL_Renderer; x1, y1, x2, y2: cfloat): cint {.importc, cdecl.}
-proc SDL_RenderSetClipRect*(renderer: ptr SDL_Renderer; rect: ptr SDL_Rect): cint {.importc, cdecl.}
 proc SDL_RenderCopy*(renderer: ptr SDL_Renderer; texture: ptr SDL_Texture; srcrect, dstrect: ptr SDL_Rect): cint {.importc, cdecl.}
 proc SDL_RenderPresent*(renderer: ptr SDL_Renderer) {.importc, cdecl.}
 proc SDL_CreateTexture*(renderer: ptr SDL_Renderer; format: uint32; access: cint; w, h: cint): ptr SDL_Texture {.importc, cdecl.}
@@ -159,7 +149,6 @@ proc SDL_DestroyTexture*(texture: ptr SDL_Texture) {.importc, cdecl.}
 proc SDL_GetWindowSize*(window: ptr SDL_Window; w, h: ptr cint) {.importc, cdecl.}
 proc SDL_MaximizeWindow*(window: ptr SDL_Window) {.importc, cdecl.}
 proc SDL_SetWindowFullscreen*(window: ptr SDL_Window; flags: uint32): cint {.importc, cdecl.}
-proc SDL_RenderSetLogicalSize*(renderer: ptr SDL_Renderer; w, h: cint): cint {.importc, cdecl.}
 proc SDL_PollEvent*(event: ptr SDL_Event): cint {.importc, cdecl.}
 proc SDL_StartTextInput*() {.importc, cdecl.}
 proc SDL_StopTextInput*() {.importc, cdecl.}

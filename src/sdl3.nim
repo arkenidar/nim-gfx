@@ -44,18 +44,11 @@ const
   # SDL pixel format / texture access (used by the Cairo backend).
   SDL_PIXELFORMAT_ARGB8888*    = 0x16362004'u32
   SDL_TEXTUREACCESS_STREAMING* = 1'i32
-  SDL_LOGICAL_PRESENTATION_LETTERBOX* = 2'i32
 
 type
   SDL_Window*   = object
   SDL_Renderer* = object
   SDL_Texture*  = object
-
-  SDL_Rect* {.bycopy.} = object
-    x*, y*, w*, h*: cint
-
-  SDL_FRect* {.bycopy.} = object
-    x*, y*, w*, h*: cfloat
 
   SDL_KeyboardEvent* {.bycopy.} = object
     typeVal*:   uint32
@@ -140,12 +133,6 @@ type
 proc SDL_Init*(flags: uint32): bool {.importc, cdecl.}
 proc SDL_CreateWindow*(title: cstring; w, h: cint; flags: uint64): ptr SDL_Window {.importc, cdecl.}
 proc SDL_CreateRenderer*(window: ptr SDL_Window; name: cstring): ptr SDL_Renderer {.importc, cdecl.}
-proc SDL_SetRenderDrawColor*(renderer: ptr SDL_Renderer; r, g, b, a: uint8): bool {.importc, cdecl.}
-proc SDL_RenderClear*(renderer: ptr SDL_Renderer): bool {.importc, cdecl.}
-proc SDL_RenderFillRect*(renderer: ptr SDL_Renderer; rect: ptr SDL_FRect): bool {.importc, cdecl.}
-proc SDL_RenderRect*(renderer: ptr SDL_Renderer; rect: ptr SDL_FRect): bool {.importc, cdecl.}
-proc SDL_RenderLine*(renderer: ptr SDL_Renderer; x1, y1, x2, y2: cfloat): bool {.importc, cdecl.}
-proc SDL_SetRenderClipRect*(renderer: ptr SDL_Renderer; rect: ptr SDL_Rect): bool {.importc, cdecl.}
 proc SDL_RenderPresent*(renderer: ptr SDL_Renderer): bool {.importc, cdecl.}
 proc SDL_PollEvent*(event: ptr SDL_Event): bool {.importc, cdecl.}
 proc SDL_SetWindowTitle*(window: ptr SDL_Window; title: cstring): bool {.importc, cdecl.}
@@ -166,7 +153,6 @@ proc SDL_SetWindowFullscreen*(window: ptr SDL_Window; fullscreen: bool): bool {.
 proc SDL_GetDisplayForWindow*(window: ptr SDL_Window): uint32 {.importc, cdecl.}
 proc SDL_GetDesktopDisplayMode*(displayID: uint32): pointer {.importc, cdecl.}
 proc SDL_SetWindowFullscreenMode*(window: ptr SDL_Window; mode: pointer): bool {.importc, cdecl.}
-proc SDL_SetRenderLogicalPresentation*(renderer: ptr SDL_Renderer; w, h: cint; mode: cint): bool {.importc, cdecl.}
 
 # --- shared window/input helpers (used by both gfx backends) ---
 

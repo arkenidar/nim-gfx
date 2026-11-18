@@ -1,6 +1,6 @@
 # examples/textdemo.nim — visual demo: fixed canvas + letterbox + picking + text.
 #
-# Build & run:  nim c -r -d:useSdl3 -d:useCairo examples/textdemo.nim
+# Build & run:  nim c -r -d:useSdl3 examples/textdemo.nim
 #               (Esc or window X to quit; F toggles fullscreen)
 #
 # One fixed logical canvas (640x480), letterboxed into the window (rememe's

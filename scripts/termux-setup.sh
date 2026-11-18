@@ -8,4 +8,4 @@ pkg install -y sdl2 sdl3 libcairo pango ttf-dejavu
 echo "Deps installed. Next:"
 echo "  git clone https://github.com/arkenidar/nim-gfx && cd nim-gfx"
 echo "  ./scripts/build-all.sh"
-echo "  nim c -r -d:useSdl2 -d:useCairo examples/textdemo.nim"
+echo "  nim c -r -d:useSdl2 examples/textdemo.nim"

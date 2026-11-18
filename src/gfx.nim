@@ -5,13 +5,11 @@
 # primitives, and input events. The concrete backend is selected at compile
 # time:
 #
-#   -d:useSdl3             -> SDL3 renderer backend
-#   -d:useSdl2             -> SDL2 renderer backend
-#   -d:useSdl3 -d:useCairo -> Cairo on SDL3
-#   -d:useSdl2 -d:useCairo -> Cairo on SDL2
-#   (no backend flag is a compile error — there is no default)
+#   -d:useSdl3 -> Cairo on the SDL3 shell
+#   -d:useSdl2 -> Cairo on the SDL2 shell
+#   (Cairo is always used; no backend flag is a compile error)
 #
-# All coordinates are window pixels.
+# Coordinates are logical after setLogicalSize (fixed canvas, letterboxed).
 
 import std/options
 
@@ -77,16 +75,9 @@ proc toLogical*(x, y: float): (float, float) =
   let offY = (float(gWinH) - gLogH * s) / 2.0
   ((x - offX) / s, (y - offY) / s)
 
-when defined(useCairo):
-  when defined(useSdl2):
-    include gfx_cairo_sdl2
-  elif defined(useSdl3):
-    include gfx_cairo_sdl3
-  else:
-    {.error: "gfx: -d:useCairo needs a shell — also pass -d:useSdl3 or -d:useSdl2".}
-elif defined(useSdl2):
-  include gfx_sdl2
+when defined(useSdl2):
+  include gfx_cairo_sdl2
 elif defined(useSdl3):
-  include gfx_sdl3
+  include gfx_cairo_sdl3
 else:
-  {.error: "gfx: no backend selected — pass -d:useSdl3 or -d:useSdl2 (optionally -d:useCairo)".}
+  {.error: "gfx: no backend selected — pass -d:useSdl3 or -d:useSdl2 (Cairo is always used)".}

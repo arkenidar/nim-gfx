@@ -1,6 +1,6 @@
 # sdl2_events.nim — shared SDL2 -> gfx facade input translation.
 #
-# This file is `include`d by the SDL2 backends (gfx_sdl2.nim / gfx_cairo_sdl2.nim),
+# This file is `include`d by the SDL2 backend (gfx_cairo_sdl2.nim),
 # so the facade types (Event, Key, Button) and the `std/options` import are
 # already in scope.
 

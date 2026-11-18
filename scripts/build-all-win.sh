@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Cross-compile all four backends to Windows .exe (then test them under Wine).
+# Cross-compile both backends to Windows .exe (then test them under Wine).
 set -e
 cd "$(dirname "$0")/.."
 
@@ -28,10 +28,8 @@ done
 
 CC="--os:windows --cpu:amd64 --cc:gcc --gcc.exe:x86_64-w64-mingw32-gcc --gcc.linkerexe:x86_64-w64-mingw32-gcc --passL:-L$WINLIB"
 mkdir -p bin
-nim c --hints:off $CC -d:useSdl3             -o:bin/hello_sdl3.exe        examples/hello.nim
-nim c --hints:off $CC -d:useSdl2             -o:bin/hello_sdl2.exe        examples/hello.nim
-nim c --hints:off $CC -d:useSdl3 -d:useCairo -o:bin/hello_cairo_sdl3.exe examples/hello.nim
-nim c --hints:off $CC -d:useSdl2 -d:useCairo -o:bin/hello_cairo_sdl2.exe examples/hello.nim
+nim c --hints:off $CC -d:useSdl3 -o:bin/hello_sdl3.exe examples/hello.nim
+nim c --hints:off $CC -d:useSdl2 -o:bin/hello_sdl2.exe examples/hello.nim
 
 echo "Done. Run under Wine with:"
 echo "  WINEPATH=$MSYS2_MINGW_LIB/../bin wine bin/<name>.exe"

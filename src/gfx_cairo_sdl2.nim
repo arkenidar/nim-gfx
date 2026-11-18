@@ -1,5 +1,5 @@
 # gfx_cairo_sdl2.nim — Cairo software backend on the SDL2 shell (selected with
-# -d:useCairo -d:useSdl2).
+# -d:useSdl2).
 #
 # Draws with Cairo into an in-memory ARGB32 image surface, then blits it into
 # the SDL2 window as a texture. This file is `include`d by gfx.nim, so it must

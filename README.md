@@ -1,7 +1,7 @@
 # nim-gfx
 
 A small, backend-agnostic graphics facade for Nim: a window + renderer, colors,
-drawing primitives, and input events — on top of raw SDL2/SDL3/Cairo FFI
+drawing primitives, and input events — on top of raw SDL2/SDL3/Cairo/Pango FFI
 bindings (no third-party bindings package).
 
 This is the foundation layer for a Nim GUI / game stack: higher-level layers
@@ -24,7 +24,7 @@ src/
 
 | Area | Status |
 |---|---|
-| 4 backends (SDL2/SDL3/Cairo x2), explicit selection | done |
+| 2 backends (Cairo on SDL3 / SDL2), explicit selection | done |
 | Input: key / mouse / text / wheel / touch(finger) / resize + clip rect | done |
 | Text: `drawText` / `drawTextWrapped` / `textSize` (via Pango) | done |
 | Fixed logical canvas + letterbox (rememe's model; draw + input consistent) | done |
@@ -40,12 +40,11 @@ three most useful recipes.
 
 | Backend | Selected by | Status |
 |---|---|---|
-| SDL3 renderer | `-d:useSdl3` | ✅ |
-| SDL2 renderer | `-d:useSdl2` | ✅ |
-| Cairo (anti-aliased) on SDL3 | `-d:useSdl3 -d:useCairo` | ✅ |
-| Cairo (anti-aliased) on SDL2 | `-d:useSdl2 -d:useCairo` | ✅ |
+| Cairo on SDL3 | `-d:useSdl3` | ✅ |
+| Cairo on SDL2 | `-d:useSdl2` | ✅ |
 
-There is **no default backend** — a build must pass one of the flags above.
+Cairo + Pango are always used. There is **no default backend** — a build must
+pass one of the two shell flags above.
 
 The public API is identical regardless of backend. Coordinates are logical
 after `setLogicalSize` — a fixed canvas, letterboxed into the window (rememe's
@@ -89,7 +88,7 @@ proc setClipRect(r: Renderer, x, y, w, h: float)
 proc resetClip(r: Renderer)
 proc present(r: Renderer)
 
-# text (Cairo backends only)
+# text (Pango)
 proc drawText(r, x, y, text, c, size = 12.0, family = "sans")
 proc drawTextWrapped(r, x, y, width, text, c, size, family)
 proc textSize(r, text, size, family): (int, int)
@@ -102,11 +101,9 @@ proc pollEvent(): Option[Event]
 ## Build & run
 
 ```sh
-# requires SDL3 and/or SDL2 (+ libcairo for the Cairo backends); Nim >= 2.0
-nim c -r -d:useSdl3 examples/hello.nim                # SDL3 renderer
-nim c -r -d:useSdl2 examples/hello.nim                # SDL2 renderer
-nim c -r -d:useSdl3 -d:useCairo examples/hello.nim    # Cairo on SDL3
-nim c -r -d:useSdl2 -d:useCairo examples/hello.nim    # Cairo on SDL2
+# requires SDL3 or SDL2 + libcairo + Pango; Nim >= 2.0
+nim c -r -d:useSdl3 examples/hello.nim    # Cairo on SDL3
+nim c -r -d:useSdl2 examples/hello.nim    # Cairo on SDL2
 ```
 
 A window opens, draws a few primitives, and closes on `Esc` or the window ✕.
@@ -114,8 +111,8 @@ A window opens, draws a few primitives, and closes on `Esc` or the window ✕.
 ## Build all backends (scripts)
 
 ```sh
-./scripts/build-all.sh       # 4 native binaries -> bin/
-./scripts/build-all-win.sh   # 4 Windows .exe -> bin/ (cross-compile for Wine)
+./scripts/build-all.sh       # 2 native binaries -> bin/
+./scripts/build-all-win.sh   # 2 Windows .exe -> bin/ (cross-compile for Wine)
 ```
 
 `build-all-win.sh` cross-compiles from Linux; it needs `gcc-mingw-w64-x86-64`
@@ -131,21 +128,19 @@ depend on `msys-2.0.dll`:
 
 ```sh
 # in the MSYS2 MinGW64 shell
-pacman -S mingw-w64-x86_64-SDL2           # SDL2 backend
-pacman -S mingw-w64-x86_64-SDL3           # SDL3 backend (if packaged; else use the
+pacman -S mingw-w64-x86_64-SDL2           # SDL2 shell
+pacman -S mingw-w64-x86_64-SDL3           # SDL3 shell (if packaged; else use the
                                           # SDL3 MinGW dev tarball from libsdl.org)
-pacman -S mingw-w64-x86_64-cairo          # Cairo backends
+pacman -S mingw-w64-x86_64-cairo          # Cairo
+pacman -S mingw-w64-x86_64-pango          # Pango (text)
 
-nim c -r -d:useSdl3 examples/hello.nim             # SDL3 backend
-nim c -r -d:useSdl2 examples/hello.nim             # SDL2 backend
-nim c -r -d:useSdl3 -d:useCairo examples/hello.nim # Cairo on SDL3
-nim c -r -d:useSdl2 -d:useCairo examples/hello.nim # Cairo on SDL2
+nim c -r -d:useSdl3 examples/hello.nim    # Cairo on SDL3
+nim c -r -d:useSdl2 examples/hello.nim    # Cairo on SDL2
 ```
 
 Inside the MinGW64 shell, `-lcairo` and `-lSDL3` resolve from `/mingw64/lib`
 automatically, and running the built `.exe` from that same shell finds the
-Cairo DLLs because `/mingw64/bin` is already on `PATH`. (The SDL-backend `.exe`
-is self-contained — static SDL3 — and runs from anywhere.)
+Cairo DLLs because `/mingw64/bin` is already on `PATH`.
 
 For local dev you can skip copying DLLs and just keep the MinGW64 `bin` on
 `PATH` (it is, inside the shell); add `C:\msys64\mingw64\bin` to the system
@@ -156,7 +151,8 @@ DLLs beside it:
 ```sh
 ldd examples/hello.exe
 # typical: libcairo-2.dll, libpixman-1-0.dll, libpng16-16.dll, zlib1.dll,
-#          libfreetype-6.dll, libfontconfig-1.dll, libexpat-1.dll, ...
+#          libpango-1.0-0.dll, libpangocairo-1.0-0.dll, libfreetype-6.dll,
+#          libfontconfig-1.dll, libexpat-1.dll, ...
 ```
 
 ### Cross-compiling from Linux (to test under Wine)
@@ -181,7 +177,7 @@ WINEPATH=<msys64>/mingw64/bin wine hello.exe
 ```sh
 ./scripts/termux-setup.sh        # nim, sdl2, sdl3, libcairo, pango, ttf-dejavu
 git clone https://github.com/arkenidar/nim-gfx && cd nim-gfx
-nim c -r -d:useSdl2 -d:useCairo examples/textdemo.nim
+nim c -r -d:useSdl2 examples/textdemo.nim
 ```
 
 To make the window fill the whole Android screen, set Termux:X11's display
@@ -193,15 +189,14 @@ that is an Android-app setting, not a nim-gfx code setting.
 ```
 src/
   gfx.nim            # public facade (types + backend selection)
-  gfx_sdl3.nim       # SDL3 renderer backend
-  gfx_sdl2.nim       # SDL2 renderer backend
-  gfx_cairo_sdl3.nim # Cairo on SDL3
-  gfx_cairo_sdl2.nim # Cairo on SDL2
+  gfx_cairo_sdl3.nim # Cairo on the SDL3 shell
+  gfx_cairo_sdl2.nim # Cairo on the SDL2 shell
   sdl3.nim           # raw SDL3 FFI + shared window/input helpers
   sdl2.nim           # raw SDL2 FFI + shared window/input helpers
   sdl_events.nim     # SDL3 -> gfx event translation
   sdl2_events.nim    # SDL2 -> gfx event translation
   cairo.nim          # raw Cairo FFI subset
+  pango.nim          # raw Pango FFI subset
 examples/
   hello.nim          # smoke test
 ```
