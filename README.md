@@ -176,7 +176,7 @@ WINEPATH=<msys64>/mingw64/bin wine hello.exe --smoke
 `DISPLAY=:0`):
 
 ```sh
-./scripts/termux-setup.sh        # nim, sdl2, libcairo, pango, ttf-dejavu
+./scripts/termux-setup.sh        # nim, sdl2, libcairo, pango, ttf-dejavu, openbox
 git clone https://github.com/arkenidar/nim-gfx && cd nim-gfx
 nim c -r examples/textdemo.nim
 ```
@@ -184,6 +184,11 @@ nim c -r examples/textdemo.nim
 On Termux the window auto-sizes to the display and centers itself (Termux:X11
 has no window manager), and on screen rotation it re-sizes + re-centers so the
 app keeps filling the screen; the fixed logical canvas re-letterboxes itself.
+
+For the fullscreen toggle (`F`) and WM-managed rotation, install a lightweight
+window manager (`pkg install openbox`) and start it before your app —
+`DISPLAY=:0 openbox &` (or set it as Termux:X11's startup command). Without a
+WM, fullscreen (`SDL_WINDOW_FULLSCREEN_DESKTOP`) has no effect.
 
 ## Layout
 
