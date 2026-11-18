@@ -6,7 +6,9 @@
 
 import ./cairo
 
-const PANGO_SCALE* = 1024
+const
+  PANGO_SCALE* = 1024
+  CAIRO_FONT_TYPE_FT = 1  # cairo_font_type_t: FreeType (fontconfig) backend
 
 type
   PangoContext* = object
@@ -26,5 +28,14 @@ proc pango_font_description_set_family*(desc: ptr PangoFontDescription; family: 
 proc pango_font_description_set_size*(desc: ptr PangoFontDescription; size: cint) {.importc, cdecl.}
 proc pango_font_description_free*(desc: ptr PangoFontDescription) {.importc, cdecl.}
 proc g_object_unref*(obj: pointer) {.importc, cdecl.}
+proc pango_cairo_font_map_new_for_font_type*(fonttype: cint): pointer {.importc, cdecl.}
+proc pango_cairo_font_map_set_default*(fontmap: pointer) {.importc, cdecl.}
+
+proc useFreeTypeFonts*() =
+  ## Force the FreeType/fontconfig font backend. The default win32/DirectWrite
+  ## backend scrambles glyphs when drawn onto a Cairo *image* surface (our SDL
+  ## texture blit path), garbling text on Windows/Wine. FreeType rasterizes to
+  ## image surfaces correctly, matching the Linux output.
+  pango_cairo_font_map_set_default(pango_cairo_font_map_new_for_font_type(CAIRO_FONT_TYPE_FT))
 
 {.passL: "-lpangocairo-1.0 -lpango-1.0 -lgobject-2.0 -lglib-2.0".}

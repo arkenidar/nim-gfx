@@ -1,13 +1,9 @@
 # gfx.nim — nim-gfx public API.
 #
-# This is the ONLY module other packages should import. It is a small,
-# backend-agnostic graphics facade: colors, a window + renderer, drawing
-# primitives, and input events. The concrete backend is selected at compile
-# time:
-#
-#   -d:useSdl3 -> Cairo on the SDL3 shell
-#   -d:useSdl2 -> Cairo on the SDL2 shell
-#   (Cairo is always used; no backend flag is a compile error)
+# This is the ONLY module other packages should import. It is a small graphics
+# facade: colors, a window + renderer, drawing primitives, and input events —
+# one backend: SDL2 (window/input) + Cairo (drawing) + Pango (text). No
+# compile-time backend flags.
 #
 # Coordinates are logical after setLogicalSize (fixed canvas, letterboxed).
 
@@ -75,9 +71,4 @@ proc toLogical*(x, y: float): (float, float) =
   let offY = (float(gWinH) - gLogH * s) / 2.0
   ((x - offX) / s, (y - offY) / s)
 
-when defined(useSdl2):
-  include gfx_cairo_sdl2
-elif defined(useSdl3):
-  include gfx_cairo_sdl3
-else:
-  {.error: "gfx: no backend selected — pass -d:useSdl3 or -d:useSdl2 (Cairo is always used)".}
+include gfx_cairo_sdl2

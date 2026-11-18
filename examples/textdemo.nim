@@ -1,12 +1,13 @@
 # examples/textdemo.nim — visual demo: fixed canvas + letterbox + picking + text.
 #
-# Build & run:  nim c -r -d:useSdl3 examples/textdemo.nim
+# Build & run:  nim c -r examples/textdemo.nim   (--smoke: one frame, then exit)
 #               (Esc or window X to quit; F toggles fullscreen)
 #
 # One fixed logical canvas (640x480), letterboxed into the window (rememe's
 # model). Resizing the window changes the bars, never the content size or shape.
 
 import std/options
+import std/os
 import gfx
 import ui/events
 
@@ -18,6 +19,7 @@ const box = (x: 380.0, y: 150.0, w: 220.0, h: 130.0)
 proc main() =
   let (win, ren) = openWindow("nim-gfx demo", 640, 480)
   setLogicalSize(ren, LogW, LogH)
+  let smoke = paramCount() >= 1 and paramStr(1) == "--smoke"
 
   var msg = "click/tap the circle or the box"
   var full = false
@@ -57,6 +59,8 @@ proc main() =
       "Pango text: single line and wrapped paragraph, rendered crisp at the window native resolution.",
       rgb(210, 220, 255), 15)
     present(ren)
+    if smoke:
+      running = false
 
   close(win, ren)
   shutdown()

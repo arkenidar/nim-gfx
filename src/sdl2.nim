@@ -25,7 +25,7 @@ const
   SDL_WINDOWEVENT_CLOSE* = 14'u8
   SDL_WINDOWPOS_UNDEFINED* = 0x1FFF0000'i32
 
-  # SDL virtual keycodes (SDL_Keycode) — same values as SDL3.
+  # SDL virtual keycodes (SDL_Keycode).
   SDLK_RETURN*    = 0x0000000d'u32
   SDLK_ESCAPE*    = 0x0000001b'u32
   SDLK_BACKSPACE* = 0x00000008'u32

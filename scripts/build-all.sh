@@ -1,11 +1,12 @@
 #!/usr/bin/env sh
-# Build both backends (Cairo on SDL3 / SDL2) of the nim-gfx smoke test into bin/.
-# Works on Linux, Termux, and Windows (MSYS2 MinGW64) — just needs `nim`
-# and the matching native libs.
+# Build all examples into bin/ (single backend: SDL2 + Cairo + Pango).
+# Works on Linux and Termux — just needs `nim` and the native libs.
 set -e
 cd "$(dirname "$0")/.."
 mkdir -p bin
-nim c --hints:off -d:useSdl3 -o:bin/hello_sdl3 examples/hello.nim
-nim c --hints:off -d:useSdl2 -o:bin/hello_sdl2 examples/hello.nim
+for ex in examples/*.nim; do
+  name=$(basename "$ex" .nim)
+  nim c --hints:off -o:"bin/$name" "$ex"
+done
 echo "Built into bin/:"
 ls -la bin/

@@ -1,8 +1,8 @@
 # nim-gfx
 
-A small, backend-agnostic graphics facade for Nim: a window + renderer, colors,
-drawing primitives, and input events — on top of raw SDL2/SDL3/Cairo/Pango FFI
-bindings (no third-party bindings package).
+A small graphics facade for Nim: a window + renderer, colors, drawing
+primitives, and input events — on top of raw SDL2/Cairo/Pango FFI bindings (no
+third-party bindings package).
 
 This is the foundation layer for a Nim GUI / game stack: higher-level layers
 (layout, views) import **only `gfx`** and never touch SDL.
@@ -24,7 +24,7 @@ src/
 
 | Area | Status |
 |---|---|
-| 2 backends (Cairo on SDL3 / SDL2), explicit selection | done |
+| Single backend (SDL2 + Cairo + Pango), no flags | done |
 | Input: key / mouse / text / wheel / touch(finger) / resize + clip rect | done |
 | Text: `drawText` / `drawTextWrapped` / `textSize` (via Pango) | done |
 | Fixed logical canvas + letterbox (rememe's model; draw + input consistent) | done |
@@ -36,19 +36,19 @@ src/
 No widget framework: screens draw + hit-test inline; `ui/patterns.nim` holds the
 three most useful recipes.
 
-## Backends
+## Backend
 
-| Backend | Selected by | Status |
-|---|---|---|
-| Cairo on SDL3 | `-d:useSdl3` | ✅ |
-| Cairo on SDL2 | `-d:useSdl2` | ✅ |
+One backend, no compile-time flags: **SDL2** (window + input) + **Cairo**
+(drawing) + **Pango** (text).
 
-Cairo + Pango are always used. There is **no default backend** — a build must
-pass one of the two shell flags above.
+Coordinates are logical after `setLogicalSize` — a fixed canvas, letterboxed
+into the window (rememe's model: one canvas, one mapping, no modes). Without it
+they are window pixels.
 
-The public API is identical regardless of backend. Coordinates are logical
-after `setLogicalSize` — a fixed canvas, letterboxed into the window (rememe's
-model: one canvas, one mapping, no modes). Without it they are window pixels.
+Text renders through Pango pinned to its **FreeType/fontconfig** backend — not
+Windows' win32/DirectWrite backend, which scrambles glyphs when rasterizing onto
+a Cairo *image* surface (our blit path). This also keeps glyphs pixel-identical
+across Linux, Windows, and Wine.
 
 ## API
 
@@ -101,22 +101,26 @@ proc pollEvent(): Option[Event]
 ## Build & run
 
 ```sh
-# requires SDL3 or SDL2 + libcairo + Pango; Nim >= 2.0
-nim c -r -d:useSdl3 examples/hello.nim    # Cairo on SDL3
-nim c -r -d:useSdl2 examples/hello.nim    # Cairo on SDL2
+# requires SDL2 + libcairo + Pango; Nim >= 2.0
+nim c -r examples/hello.nim
 ```
 
 A window opens, draws a few primitives, and closes on `Esc` or the window ✕.
 
-## Build all backends (scripts)
+## Build all examples (scripts)
 
 ```sh
-./scripts/build-all.sh       # 2 native binaries -> bin/
-./scripts/build-all-win.sh   # 2 Windows .exe -> bin/ (cross-compile for Wine)
+./scripts/build-all.sh       # every examples/*.nim -> bin/
+./scripts/build-all-win.sh   # every examples/*.nim -> bin/*.exe (cross-compile)
 ```
 
-`build-all-win.sh` cross-compiles from Linux; it needs `gcc-mingw-w64-x86-64`
-and the MSYS2 import libs (override `MSYS2_MINGW_LIB` if your MSYS2 is elsewhere).
+`build-all.sh` builds every `.nim` in `examples/` automatically.
+`build-all-win.sh` cross-compiles from Linux (needs `gcc-mingw-w64-x86-64` and
+the MSYS2 import libs; override `MSYS2_MINGW_LIB` if your MSYS2 is elsewhere)
+and, if `wine` is installed, smoke-tests each `.exe --smoke` (one frame, exit).
+The Wine step also seeds one host font into Wine's prefix
+(`~/.wine/drive_c/windows/Fonts`, which Wine ships empty) so the FreeType text
+backend has a font to find; on real Windows this isn't needed.
 
 On Termux: `./scripts/termux-setup.sh`, then `./scripts/build-all.sh`.
 
@@ -128,17 +132,14 @@ depend on `msys-2.0.dll`:
 
 ```sh
 # in the MSYS2 MinGW64 shell
-pacman -S mingw-w64-x86_64-SDL2           # SDL2 shell
-pacman -S mingw-w64-x86_64-SDL3           # SDL3 shell (if packaged; else use the
-                                          # SDL3 MinGW dev tarball from libsdl.org)
+pacman -S mingw-w64-x86_64-SDL2           # SDL2
 pacman -S mingw-w64-x86_64-cairo          # Cairo
 pacman -S mingw-w64-x86_64-pango          # Pango (text)
 
-nim c -r -d:useSdl3 examples/hello.nim    # Cairo on SDL3
-nim c -r -d:useSdl2 examples/hello.nim    # Cairo on SDL2
+nim c -r examples/hello.nim
 ```
 
-Inside the MinGW64 shell, `-lcairo` and `-lSDL3` resolve from `/mingw64/lib`
+Inside the MinGW64 shell, `-lcairo` and `-lSDL2` resolve from `/mingw64/lib`
 automatically, and running the built `.exe` from that same shell finds the
 Cairo DLLs because `/mingw64/bin` is already on `PATH`.
 
@@ -158,26 +159,26 @@ ldd examples/hello.exe
 ### Cross-compiling from Linux (to test under Wine)
 
 With `gcc-mingw-w64-x86-64` installed you can build Windows `.exe` files and run
-them under Wine. Put only the SDL2/Cairo *import* libs in a neutral `-L` dir so
-they don't clash with the host mingw runtime:
+them under Wine. Put the needed *import* libs in a neutral `-L` dir so they
+don't clash with the host mingw runtime (add Pango's for `textdemo`):
 
 ```sh
 mkdir -p /tmp/winlib && cp <msys64>/mingw64/lib/libSDL2.dll.a <msys64>/mingw64/lib/libcairo.dll.a /tmp/winlib/
 nim c --os:windows --cpu:amd64 --cc:gcc \
      --gcc.exe:x86_64-w64-mingw32-gcc --gcc.linkerexe:x86_64-w64-mingw32-gcc \
-     --passL:-L/tmp/winlib -d:useSdl2 -o:hello.exe examples/hello.nim
-WINEPATH=<msys64>/mingw64/bin wine hello.exe
+     --passL:-L/tmp/winlib -o:hello.exe examples/hello.nim
+WINEPATH=<msys64>/mingw64/bin wine hello.exe --smoke
 ```
 
 ## Termux (Android)
 
-`nim`, `sdl2`, `sdl3` and `libcairo` are packaged (run under Termux:X11 with
+`nim`, `sdl2` and `libcairo` are packaged (run under Termux:X11 with
 `DISPLAY=:0`):
 
 ```sh
-./scripts/termux-setup.sh        # nim, sdl2, sdl3, libcairo, pango, ttf-dejavu
+./scripts/termux-setup.sh        # nim, sdl2, libcairo, pango, ttf-dejavu
 git clone https://github.com/arkenidar/nim-gfx && cd nim-gfx
-nim c -r -d:useSdl2 examples/textdemo.nim
+nim c -r examples/textdemo.nim
 ```
 
 To make the window fill the whole Android screen, set Termux:X11's display
@@ -188,17 +189,15 @@ that is an Android-app setting, not a nim-gfx code setting.
 
 ```
 src/
-  gfx.nim            # public facade (types + backend selection)
-  gfx_cairo_sdl3.nim # Cairo on the SDL3 shell
-  gfx_cairo_sdl2.nim # Cairo on the SDL2 shell
-  sdl3.nim           # raw SDL3 FFI + shared window/input helpers
-  sdl2.nim           # raw SDL2 FFI + shared window/input helpers
-  sdl_events.nim     # SDL3 -> gfx event translation
+  gfx.nim            # public facade (single backend)
+  gfx_cairo_sdl2.nim # Cairo software backend on the SDL2 shell
+  sdl2.nim           # raw SDL2 FFI + window/input helpers
   sdl2_events.nim    # SDL2 -> gfx event translation
   cairo.nim          # raw Cairo FFI subset
   pango.nim          # raw Pango FFI subset
 examples/
   hello.nim          # smoke test
+  textdemo.nim       # text + picking demo
 ```
 
 ## License

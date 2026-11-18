@@ -2,10 +2,10 @@
 
 `nim-gfx` links against the following native libraries.
 
-## SDL3
+## SDL2
 
-Simple DirectMedia Layer 3 — **zlib License**.
-https://github.com/libsdl-org/SDL/blob/main/LICENSE.txt
+Simple DirectMedia Layer 2 — **zlib License**.
+https://github.com/libsdl-org/SDL/blob/SDL2/LICENSE.txt
 
 ## Cairo
 

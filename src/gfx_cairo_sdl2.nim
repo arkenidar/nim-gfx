@@ -1,5 +1,4 @@
-# gfx_cairo_sdl2.nim — Cairo software backend on the SDL2 shell (selected with
-# -d:useSdl2).
+# gfx_cairo_sdl2.nim — Cairo software backend on the SDL2 shell.
 #
 # Draws with Cairo into an in-memory ARGB32 image surface, then blits it into
 # the SDL2 window as a texture. This file is `include`d by gfx.nim, so it must
@@ -42,6 +41,7 @@ proc openWindow*(title: string; w, h: int): (Window, Renderer) =
   obj.surface = surface
   obj.cr = cr
   obj.window = win
+  useFreeTypeFonts()  # the win32/DirectWrite backend garbles glyphs on image surfaces
   obj.layout = pango_cairo_create_layout(cr)
   pango_cairo_context_set_resolution(pango_layout_get_context(obj.layout), 72.0)
   obj.width = w

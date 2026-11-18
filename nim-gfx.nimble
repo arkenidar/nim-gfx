@@ -1,6 +1,6 @@
 version       = "0.1.0"
 author        = "nim-gfx contributors"
-description   = "Backend-agnostic graphics facade (window/renderer/colors/drawing/input) over SDL3"
+description   = "Graphics facade (window/renderer/colors/drawing/input) over SDL2 + Cairo + Pango"
 license       = "MIT"
 srcDir        = "src"
 skipDirs      = @["examples", "tests"]

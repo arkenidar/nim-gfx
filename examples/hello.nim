@@ -1,9 +1,10 @@
 # examples/hello.nim — nim-gfx smoke test.
 #
 # Opens a window, draws a few primitives, and closes on Escape or the window ✕.
-# Build:  nim c -r -d:useSdl3 examples/hello.nim   (or -d:useSdl2)
+# Build:  nim c -r examples/hello.nim   (--smoke: one frame, then exit)
 
 import std/options
+import std/os
 import gfx
 
 const
@@ -12,6 +13,7 @@ const
 
 proc main() =
   let (win, ren) = openWindow("nim-gfx hello", WinW, WinH)
+  let smoke = paramCount() >= 1 and paramStr(1) == "--smoke"
 
   var running = true
   while running:
@@ -39,6 +41,8 @@ proc main() =
     roundedRect(ren, 420, 320, 160, 90, 20, rgb(200, 120, 255))  # rounded rect
 
     present(ren)
+    if smoke:
+      running = false
 
   close(win, ren)
   shutdown()
