@@ -36,14 +36,19 @@ type
 
   EventKind* = enum
     evNone, evQuit, evKeyDown, evKeyUp,
-    evMouseDown, evMouseUp, evMouseMotion, evTextInput
+    evMouseDown, evMouseUp, evMouseMotion, evMouseWheel, evTextInput,
+    evFingerDown, evFingerUp, evFingerMotion, evResize
 
   Event* = object
     kind*: EventKind
     key*: Key
     button*: Button
     mouseX*, mouseY*: int
+    wheelX*, wheelY*: int
     text*: string
+    fingerId*: int64
+    fingerX*, fingerY*, fingerDx*, fingerDy*, pressure*: float
+    resizeW*, resizeH*: int
 
 proc rgb*(r, g, b: uint8, a: uint8 = 255): Color {.inline.} =
   Color(r: r, g: g, b: b, a: a)

@@ -119,5 +119,13 @@ proc present*(r: Renderer) =
   discard SDL_RenderCopy(o.sdlRenderer, o.texture, nil, nil)
   SDL_RenderPresent(o.sdlRenderer)
 
+proc setClipRect*(r: Renderer; x, y, w, h: float) =
+  let cr = toR(r).cr
+  cairo_rectangle(cr, x, y, w, h)
+  cairo_clip(cr)
+
+proc resetClip*(r: Renderer) =
+  cairo_reset_clip(toR(r).cr)
+
 proc ticks*(): int =
   sdl2Ticks()

@@ -60,5 +60,27 @@ proc pollEvent*(): Option[Event] =
     of SDL_EVENT_MOUSE_BUTTON_UP:
       return some(Event(kind: evMouseUp, button: toButton(e.button.button),
         mouseX: int(e.button.x), mouseY: int(e.button.y)))
+    of SDL_EVENT_MOUSE_WHEEL:
+      return some(Event(kind: evMouseWheel,
+        wheelX: int(e.wheel.x), wheelY: int(e.wheel.y),
+        mouseX: int(e.wheel.mouseX), mouseY: int(e.wheel.mouseY)))
+    of SDL_EVENT_FINGER_DOWN:
+      return some(Event(kind: evFingerDown, fingerId: int64(e.finger.fingerID),
+        fingerX: float(e.finger.x), fingerY: float(e.finger.y),
+        fingerDx: float(e.finger.dx), fingerDy: float(e.finger.dy),
+        pressure: float(e.finger.pressure)))
+    of SDL_EVENT_FINGER_UP:
+      return some(Event(kind: evFingerUp, fingerId: int64(e.finger.fingerID),
+        fingerX: float(e.finger.x), fingerY: float(e.finger.y),
+        fingerDx: float(e.finger.dx), fingerDy: float(e.finger.dy),
+        pressure: float(e.finger.pressure)))
+    of SDL_EVENT_FINGER_MOTION:
+      return some(Event(kind: evFingerMotion, fingerId: int64(e.finger.fingerID),
+        fingerX: float(e.finger.x), fingerY: float(e.finger.y),
+        fingerDx: float(e.finger.dx), fingerDy: float(e.finger.dy),
+        pressure: float(e.finger.pressure)))
+    of SDL_EVENT_WINDOW_RESIZED:
+      return some(Event(kind: evResize,
+        resizeW: int(e.window.data1), resizeH: int(e.window.data2)))
     else:
       discard  # uninteresting event; keep draining

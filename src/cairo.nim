@@ -32,6 +32,8 @@ proc cairo_line_to*(cr: ptr cairo_t; x, y: cdouble) {.importc, cdecl.}
 proc cairo_close_path*(cr: ptr cairo_t) {.importc, cdecl.}
 proc cairo_stroke*(cr: ptr cairo_t) {.importc, cdecl.}
 proc cairo_fill*(cr: ptr cairo_t) {.importc, cdecl.}
+proc cairo_clip*(cr: ptr cairo_t) {.importc, cdecl.}
+proc cairo_reset_clip*(cr: ptr cairo_t) {.importc, cdecl.}
 proc cairo_set_line_width*(cr: ptr cairo_t; width: cdouble) {.importc, cdecl.}
 proc cairo_set_line_cap*(cr: ptr cairo_t; cap: cint) {.importc, cdecl.}
 

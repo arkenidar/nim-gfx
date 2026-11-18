@@ -76,5 +76,12 @@ proc roundedRect*(r: Renderer; x, y, w, h, radius: float; c: Color) =
 proc present*(r: Renderer) =
   discard SDL_RenderPresent(cast[ptr SDL_Renderer](r))
 
+proc setClipRect*(r: Renderer; x, y, w, h: float) =
+  var rect = SDL_Rect(x: cint(x), y: cint(y), w: cint(w), h: cint(h))
+  discard SDL_SetRenderClipRect(cast[ptr SDL_Renderer](r), addr rect)
+
+proc resetClip*(r: Renderer) =
+  discard SDL_SetRenderClipRect(cast[ptr SDL_Renderer](r), nil)
+
 proc ticks*(): int =
   sdlTicks()

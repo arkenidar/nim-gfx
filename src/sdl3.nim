@@ -15,6 +15,11 @@ const
   SDL_EVENT_MOUSE_MOTION*         = 0x00000400'u32
   SDL_EVENT_MOUSE_BUTTON_DOWN*    = 0x00000401'u32
   SDL_EVENT_MOUSE_BUTTON_UP*      = 0x00000402'u32
+  SDL_EVENT_MOUSE_WHEEL*          = 0x00000403'u32
+  SDL_EVENT_FINGER_DOWN*          = 0x00000700'u32
+  SDL_EVENT_FINGER_UP*            = 0x00000701'u32
+  SDL_EVENT_FINGER_MOTION*        = 0x00000702'u32
+  SDL_EVENT_WINDOW_RESIZED*       = 0x00000206'u32
 
   # SDL virtual keycodes (SDL_Keycode).
   SDLK_RETURN*     = 0x0000000d'u32
@@ -43,6 +48,9 @@ type
   SDL_Window*   = object
   SDL_Renderer* = object
   SDL_Texture*  = object
+
+  SDL_Rect* {.bycopy.} = object
+    x*, y*, w*, h*: cint
 
   SDL_FRect* {.bycopy.} = object
     x*, y*, w*, h*: cfloat
@@ -88,6 +96,33 @@ type
     padding*:   uint8
     x*, y*:     cfloat
 
+  SDL_MouseWheelEvent* {.bycopy.} = object
+    typeVal*:   uint32
+    reserved*:  uint32
+    timestamp*: uint64
+    windowID*:  uint32
+    which*:     uint32
+    x*, y*:     cfloat
+    direction*: int32
+    mouseX*, mouseY*: cfloat
+    integerX*, integerY*: int32
+
+  SDL_TouchFingerEvent* {.bycopy.} = object
+    typeVal*:   uint32
+    reserved*:  uint32
+    timestamp*: uint64
+    touchID*:   uint64
+    fingerID*:  uint64
+    x*, y*, dx*, dy*, pressure*: cfloat
+    windowID*:  uint32
+
+  SDL_WindowEvent* {.bycopy.} = object
+    typeVal*:   uint32
+    reserved*:  uint32
+    timestamp*: uint64
+    windowID*:  uint32
+    data1*, data2*: int32
+
   # SDL_Event is a C union: all members overlap at offset 0, padded to 128 bytes.
   SDL_Event* {.union, bycopy.} = object
     typeVal*: uint32
@@ -95,6 +130,9 @@ type
     text*:    SDL_TextInputEvent
     motion*:  SDL_MouseMotionEvent
     button*:  SDL_MouseButtonEvent
+    wheel*:   SDL_MouseWheelEvent
+    finger*:  SDL_TouchFingerEvent
+    window*:  SDL_WindowEvent
     padding*: array[128, uint8]
 
 proc SDL_Init*(flags: uint32): bool {.importc, cdecl.}
@@ -105,6 +143,7 @@ proc SDL_RenderClear*(renderer: ptr SDL_Renderer): bool {.importc, cdecl.}
 proc SDL_RenderFillRect*(renderer: ptr SDL_Renderer; rect: ptr SDL_FRect): bool {.importc, cdecl.}
 proc SDL_RenderRect*(renderer: ptr SDL_Renderer; rect: ptr SDL_FRect): bool {.importc, cdecl.}
 proc SDL_RenderLine*(renderer: ptr SDL_Renderer; x1, y1, x2, y2: cfloat): bool {.importc, cdecl.}
+proc SDL_SetRenderClipRect*(renderer: ptr SDL_Renderer; rect: ptr SDL_Rect): bool {.importc, cdecl.}
 proc SDL_RenderPresent*(renderer: ptr SDL_Renderer): bool {.importc, cdecl.}
 proc SDL_PollEvent*(event: ptr SDL_Event): bool {.importc, cdecl.}
 proc SDL_SetWindowTitle*(window: ptr SDL_Window; title: cstring): bool {.importc, cdecl.}

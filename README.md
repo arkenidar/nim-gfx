@@ -7,6 +7,33 @@ bindings (no third-party bindings package).
 This is the foundation layer for a Nim GUI / game stack: higher-level packages
 (widgets, layout, game views) import **only `gfx`** and never touch SDL.
 
+## Roadmap
+
+`nim-gfx` is a graphics lib plus (in the `ui/` subfolder) a minimal UI kit.
+Dependencies are one-way: `gfx.*` never knows about `ui.*`.
+
+```
+src/
+  gfx...             # graphics + input (draw, pollEvent, clip, ...)
+  ui/
+    layout.nim        # pure geometry + responsive layout (zero deps)
+    events.nim        # hit-testing + focus + mouse/touch routing
+    view.nim          # Screen (render/onEvent/onResize) + stack + overlays
+    patterns.nim      # the 3 recipes: button, scrollable pane, text input
+```
+
+| Area | Status |
+|---|---|
+| 4 backends (SDL2/SDL3/Cairo x2), explicit selection | done |
+| Input: key / mouse / text / wheel / touch(finger) / resize + clip rect | done |
+| Text: `drawText` + `measureText` (via Cairo) | next |
+| Clipboard (copy/paste) | next |
+| Logical scaling / letterbox (responsive layout) | next |
+| `ui/`: layout -> events -> view -> patterns | next |
+
+No widget framework: screens draw + hit-test inline; `ui/patterns.nim` holds the
+three most useful recipes.
+
 ## Backends
 
 | Backend | Selected by | Status |

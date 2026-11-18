@@ -15,6 +15,11 @@ const
   SDL_EVENT_MOUSE_MOTION*    = 0x00000400'u32
   SDL_EVENT_MOUSE_BUTTON_DOWN* = 0x00000401'u32
   SDL_EVENT_MOUSE_BUTTON_UP*   = 0x00000402'u32
+  SDL_EVENT_MOUSE_WHEEL*       = 0x00000403'u32
+  SDL_EVENT_FINGER_DOWN*       = 0x00000700'u32
+  SDL_EVENT_FINGER_UP*         = 0x00000701'u32
+  SDL_EVENT_FINGER_MOTION*     = 0x00000702'u32
+  SDL_WINDOWEVENT_RESIZED*     = 5'u8
 
   SDL_WINDOWEVENT_CLOSE* = 14'u8
   SDL_WINDOWPOS_UNDEFINED* = 0x1FFF0000'i32
@@ -104,6 +109,24 @@ type
     padding3*:  uint8
     data1*, data2*: int32
 
+  SDL_MouseWheelEvent* {.bycopy.} = object
+    typeVal*:   uint32
+    timestamp*: uint32
+    windowID*:  uint32
+    which*:     uint32
+    x*, y*:     int32
+    direction*: uint32
+    preciseX*, preciseY*: cfloat
+    mouseX*, mouseY*: int32
+
+  SDL_TouchFingerEvent* {.bycopy.} = object
+    typeVal*:   uint32
+    timestamp*: uint32
+    touchId*:   int64
+    fingerId*:  int64
+    x*, y*, dx*, dy*, pressure*: cfloat
+    windowID*:  uint32
+
   # SDL_Event is a C union, 56 bytes on 64-bit platforms.
   SDL_Event* {.union, bycopy.} = object
     typeVal*: uint32
@@ -112,6 +135,8 @@ type
     text*:    SDL_TextInputEvent
     motion*:  SDL_MouseMotionEvent
     button*:  SDL_MouseButtonEvent
+    wheel*:   SDL_MouseWheelEvent
+    finger*:  SDL_TouchFingerEvent
     padding*: array[56, uint8]
 
 proc SDL_Init*(flags: uint32): cint {.importc, cdecl.}
@@ -123,6 +148,7 @@ proc SDL_RenderFillRect*(renderer: ptr SDL_Renderer; rect: ptr SDL_Rect): cint {
 proc SDL_RenderFillRectF*(renderer: ptr SDL_Renderer; rect: ptr SDL_FRect): cint {.importc, cdecl.}
 proc SDL_RenderDrawLine*(renderer: ptr SDL_Renderer; x1, y1, x2, y2: cint): cint {.importc, cdecl.}
 proc SDL_RenderDrawLineF*(renderer: ptr SDL_Renderer; x1, y1, x2, y2: cfloat): cint {.importc, cdecl.}
+proc SDL_RenderSetClipRect*(renderer: ptr SDL_Renderer; rect: ptr SDL_Rect): cint {.importc, cdecl.}
 proc SDL_RenderCopy*(renderer: ptr SDL_Renderer; texture: ptr SDL_Texture; srcrect, dstrect: ptr SDL_Rect): cint {.importc, cdecl.}
 proc SDL_RenderPresent*(renderer: ptr SDL_Renderer) {.importc, cdecl.}
 proc SDL_CreateTexture*(renderer: ptr SDL_Renderer; format: uint32; access: cint; w, h: cint): ptr SDL_Texture {.importc, cdecl.}
