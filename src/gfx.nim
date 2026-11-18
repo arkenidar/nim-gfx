@@ -71,4 +71,10 @@ proc toLogical*(x, y: float): (float, float) =
   let offY = (float(gWinH) - gLogH * s) / 2.0
   ((x - offX) / s, (y - offY) / s)
 
+proc setLogicalSize*(r: Renderer; w, h: float) =
+  ## Set the fixed logical canvas — rememe's model: one canvas, one mapping,
+  ## no modes. Drawn content and input are letterboxed (fit, preserve aspect)
+  ## into the window; without this, coordinates are window pixels.
+  gLogW = w; gLogH = h
+
 include gfx_cairo_sdl2

@@ -181,9 +181,9 @@ git clone https://github.com/arkenidar/nim-gfx && cd nim-gfx
 nim c -r examples/textdemo.nim
 ```
 
-To make the window fill the whole Android screen, set Termux:X11's display
-resolution to match the device and enable fullscreen/immersive in its settings —
-that is an Android-app setting, not a nim-gfx code setting.
+On Termux the window auto-sizes to the display (Termux:X11 has no window
+manager) and tracks the display on screen rotation, so the app fills the screen;
+the fixed logical canvas is re-letterboxed automatically.
 
 ## Layout
 

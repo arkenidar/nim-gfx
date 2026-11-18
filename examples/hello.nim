@@ -13,6 +13,7 @@ const
 
 proc main() =
   let (win, ren) = openWindow("nim-gfx hello", WinW, WinH)
+  setLogicalSize(ren, float(WinW), float(WinH))  # fixed canvas, letterboxed
   let smoke = paramCount() >= 1 and paramStr(1) == "--smoke"
 
   var running = true

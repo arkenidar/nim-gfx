@@ -126,6 +126,15 @@ proc roundedRect*(r: Renderer; x, y, w, h, radius: float; c: Color) =
 
 proc present*(r: Renderer) =
   let o = toR(r)
+  if termuxDetected():
+    # Track the display so screen rotation (orientation change) resizes the
+    # window; the fixed logical canvas is re-letterboxed by the resize below.
+    var dm: SDL_DisplayMode
+    if SDL_GetCurrentDisplayMode(0, addr dm) == 0 and dm.w > 0 and dm.h > 0:
+      var cw, ch: cint
+      SDL_GetWindowSize(cast[ptr SDL_Window](o.window), addr cw, addr ch)
+      if cw != dm.w or ch != dm.h:
+        SDL_SetWindowSize(cast[ptr SDL_Window](o.window), dm.w, dm.h)
   var ww, wh: cint
   SDL_GetWindowSize(cast[ptr SDL_Window](o.window), addr ww, addr wh)
   if int(ww) != o.width or int(wh) != o.height:
@@ -203,8 +212,14 @@ proc maximize*(w: Window) =
 proc setFullscreen*(w: Window; fs: bool) =
   discard SDL_SetWindowFullscreen(cast[ptr SDL_Window](w), if fs: SDL_WINDOW_FULLSCREEN_DESKTOP else: 0'u32)
 
-proc setLogicalSize*(r: Renderer; w, h: float) =
-  gLogW = w; gLogH = h
+proc displaySize*(): (int, int) =
+  ## Current display (screen) size in pixels; useful to size a window to fill
+  ## the screen explicitly. Returns (0, 0) if the query fails.
+  var dm: SDL_DisplayMode
+  if SDL_GetCurrentDisplayMode(0, addr dm) == 0:
+    (int(dm.w), int(dm.h))
+  else:
+    (0, 0)
 
 proc ticks*(): int =
   sdl2Ticks()

@@ -4,6 +4,8 @@
 # constants. Application code should NOT import this module directly — use
 # `gfx` (which routes through a backend) instead.
 
+import std/os
+
 const
   SDL_INIT_VIDEO* = 0x00000020'u32
   SDL_WINDOW_RESIZABLE* = 0x00000020'u32
@@ -56,6 +58,12 @@ type
 
   SDL_Rect* {.bycopy.} = object
     x*, y*, w*, h*: cint
+
+  SDL_DisplayMode* {.bycopy.} = object
+    format*:      uint32
+    w*, h*:       cint
+    refreshRate*: cint
+    driverdata*:  pointer
 
   SDL_Keysym* {.bycopy.} = object
     scancode*: int32
@@ -147,6 +155,8 @@ proc SDL_CreateTexture*(renderer: ptr SDL_Renderer; format: uint32; access: cint
 proc SDL_UpdateTexture*(texture: ptr SDL_Texture; rect: ptr SDL_Rect; pixels: pointer; pitch: cint): cint {.importc, cdecl.}
 proc SDL_DestroyTexture*(texture: ptr SDL_Texture) {.importc, cdecl.}
 proc SDL_GetWindowSize*(window: ptr SDL_Window; w, h: ptr cint) {.importc, cdecl.}
+proc SDL_SetWindowSize*(window: ptr SDL_Window; w, h: cint) {.importc, cdecl.}
+proc SDL_GetCurrentDisplayMode*(displayIndex: cint; mode: ptr SDL_DisplayMode): cint {.importc, cdecl.}
 proc SDL_MaximizeWindow*(window: ptr SDL_Window) {.importc, cdecl.}
 proc SDL_SetWindowFullscreen*(window: ptr SDL_Window; flags: uint32): cint {.importc, cdecl.}
 proc SDL_PollEvent*(event: ptr SDL_Event): cint {.importc, cdecl.}
@@ -163,13 +173,26 @@ when defined(windows):
 else:
   {.passL: "-lSDL2 -lm".}
 
-# --- shared helpers (used by the SDL2 and Cairo-on-SDL2 backends) ---
+# --- shared helpers (used by the Cairo-on-SDL2 backend) ---
+
+proc termuxDetected*(): bool =
+  ## True when running under Termux (Termux:X11 has no window manager, so the
+  ## window must be sized to the display to fill the screen).
+  getEnv("TERMUX_VERSION") != ""
 
 proc initSdl2Window*(title: string; w, h: int): (ptr SDL_Window, ptr SDL_Renderer) =
   if SDL_Init(SDL_INIT_VIDEO) != 0:
     raise newException(IOError, "SDL_Init failed: " & $SDL_GetError())
+  var ww = cint(w)
+  var wh = cint(h)
+  if termuxDetected():
+    # Termux:X11 has no window manager: auto-size the window to the display so
+    # the app fills the screen (matching rememe), keeping a resizable border.
+    var dm: SDL_DisplayMode
+    if SDL_GetCurrentDisplayMode(0, addr dm) == 0 and dm.w > 0 and dm.h > 0:
+      ww = dm.w; wh = dm.h
   let win = SDL_CreateWindow(title.cstring, SDL_WINDOWPOS_UNDEFINED,
-    SDL_WINDOWPOS_UNDEFINED, cint(w), cint(h), SDL_WINDOW_RESIZABLE)
+    SDL_WINDOWPOS_UNDEFINED, ww, wh, SDL_WINDOW_RESIZABLE)
   if win.isNil:
     SDL_Quit()
     raise newException(IOError, "SDL_CreateWindow failed: " & $SDL_GetError())
