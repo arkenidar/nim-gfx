@@ -59,7 +59,7 @@ proc main() =
     drawText(ren, box.x + 18, box.y + 18, "rounded box", white(), 16)
 
     drawText(ren, 20, 20, msg, white(), 18)
-    drawText(ren, 20, 46, "logical 640x480, fill (no bars), F = fullscreen", rgb(150, 200, 150), 14)
+    drawText(ren, 20, 46, "logical 640x480, cover (fill + keep aspect), F = fullscreen", rgb(150, 200, 150), 14)
     drawTextWrapped(ren, 20, 380, 400,
       "Pango text: single line and wrapped paragraph, rendered crisp at the window's native resolution via coordinate scaling.",
       rgb(210, 220, 255), 15)

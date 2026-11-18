@@ -46,6 +46,7 @@ const
   SDL_TEXTUREACCESS_STREAMING* = 1'i32
   SDL_LOGICAL_PRESENTATION_STRETCH*   = 1'i32
   SDL_LOGICAL_PRESENTATION_LETTERBOX* = 2'i32
+  SDL_LOGICAL_PRESENTATION_OVERSCAN*  = 3'i32
 
 type
   SDL_Window*   = object
@@ -164,6 +165,9 @@ proc SDL_DestroyTexture*(texture: ptr SDL_Texture) {.importc, cdecl.}
 proc SDL_GetWindowSize*(window: ptr SDL_Window; w, h: ptr cint): bool {.importc, cdecl.}
 proc SDL_MaximizeWindow*(window: ptr SDL_Window): bool {.importc, cdecl.}
 proc SDL_SetWindowFullscreen*(window: ptr SDL_Window; fullscreen: bool): bool {.importc, cdecl.}
+proc SDL_GetDisplayForWindow*(window: ptr SDL_Window): uint32 {.importc, cdecl.}
+proc SDL_GetDesktopDisplayMode*(displayID: uint32): pointer {.importc, cdecl.}
+proc SDL_SetWindowFullscreenMode*(window: ptr SDL_Window; mode: pointer): bool {.importc, cdecl.}
 proc SDL_SetRenderLogicalPresentation*(renderer: ptr SDL_Renderer; w, h: cint; mode: cint): bool {.importc, cdecl.}
 
 # --- shared window/input helpers (used by both gfx backends) ---

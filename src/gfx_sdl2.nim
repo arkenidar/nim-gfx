@@ -104,8 +104,9 @@ proc maximize*(w: Window) =
 proc setFullscreen*(w: Window; fs: bool) =
   discard SDL_SetWindowFullscreen(cast[ptr SDL_Window](w), if fs: SDL_WINDOW_FULLSCREEN_DESKTOP else: 0'u32)
 
-proc setLogicalSize*(r: Renderer; w, h: float; mode: ScaleMode = scaleStretch) =
+proc setLogicalSize*(r: Renderer; w, h: float; mode: ScaleMode = scaleCover) =
   gLogW = w; gLogH = h; gScaleMode = mode
+  # SDL2 native logical size (approx; cover/contain/fill honored by Cairo/SDL3)
   discard SDL_RenderSetLogicalSize(cast[ptr SDL_Renderer](r), cint(w), cint(h))
 
 proc ticks*(): int =

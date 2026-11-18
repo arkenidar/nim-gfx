@@ -64,26 +64,30 @@ proc gray*(v: uint8, a: uint8 = 255): Color {.inline.} = rgb(v, v, v, a)
 
 type
   ScaleMode* = enum
-    scaleStretch     ## fill the whole window/screen (default; may distort aspect)
-    scaleLetterbox   ## fit, preserve aspect (bars) — opt-in only
+    scaleCover     ## object-fit: cover — fill, preserve aspect, crop overflow (DEFAULT)
+    scaleContain   ## object-fit: contain — fit, preserve aspect, letterbox bars
+    scaleFill      ## object-fit: fill — stretch to fill (distorts)
 
 var gLogW = 0.0
 var gLogH = 0.0
 var gWinW = 0
 var gWinH = 0
-var gScaleMode = scaleStretch
+var gScaleMode = scaleCover
 
 proc toLogical*(x, y: float): (float, float) =
   ## Inverse of the logical->window transform: window pixel -> logical coord.
   if gLogW <= 0.0 or gLogH <= 0.0 or gWinW <= 0 or gWinH <= 0:
     return (x, y)
-  if gScaleMode == scaleStretch:
+  case gScaleMode
+  of scaleFill:
     (x / (float(gWinW) / gLogW), y / (float(gWinH) / gLogH))
   else:
-    let scale = min(float(gWinW) / gLogW, float(gWinH) / gLogH)
-    let offX = (float(gWinW) - gLogW * scale) / 2.0
-    let offY = (float(gWinH) - gLogH * scale) / 2.0
-    ((x - offX) / scale, (y - offY) / scale)
+    let s =
+      if gScaleMode == scaleCover: max(float(gWinW) / gLogW, float(gWinH) / gLogH)
+      else: min(float(gWinW) / gLogW, float(gWinH) / gLogH)
+    let offX = (float(gWinW) - gLogW * s) / 2.0
+    let offY = (float(gWinH) - gLogH * s) / 2.0
+    ((x - offX) / s, (y - offY) / s)
 
 when defined(useCairo):
   when defined(useSdl2):
