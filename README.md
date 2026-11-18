@@ -85,8 +85,15 @@ nim c -r -d:useCairo examples/hello.nim    # Cairo backend
 ```
 
 Inside the MinGW64 shell, `-lcairo` and `-lSDL3` resolve from `/mingw64/lib`
-automatically. To ship a standalone `.exe`, list its DLL dependencies and copy
-them beside it:
+automatically, and running the built `.exe` from that same shell finds the
+Cairo DLLs because `/mingw64/bin` is already on `PATH`. (The SDL-backend `.exe`
+is self-contained — static SDL3 — and runs from anywhere.)
+
+For local dev you can skip copying DLLs and just keep the MinGW64 `bin` on
+`PATH` (it is, inside the shell); add `C:\msys64\mingw64\bin` to the system
+`PATH` to double-click from Explorer. Under Wine, use
+`WINEPATH=/path/to/msys64/mingw64/bin`. To ship a *standalone* `.exe`, copy the
+DLLs beside it:
 
 ```sh
 ldd examples/hello.exe
