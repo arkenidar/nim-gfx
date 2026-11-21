@@ -136,6 +136,75 @@ proc roundedRect*(r: Renderer; x, y, w, h, radius: float; c: Color) =
   cairo_close_path(cr)
   cairo_fill(cr)
 
+proc polygon*(r: Renderer; points: openArray[(float, float)]; c: Color) =
+  ## Filled polygon through `points`: move to the first, line-to the rest,
+  ## close the path and fill.
+  if points.len < 3: return
+  let cr = toR(r).cr
+  setSource(r, c)
+  cairo_move_to(cr, points[0][0], points[0][1])
+  for i in 1 ..< points.len:
+    cairo_line_to(cr, points[i][0], points[i][1])
+  cairo_close_path(cr)
+  cairo_fill(cr)
+
+proc polyline*(r: Renderer; points: openArray[(float, float)]; c: Color; width: float = 1.0) =
+  ## Stroked open path through `points` with the given line width.
+  if points.len < 2: return
+  let cr = toR(r).cr
+  setSource(r, c)
+  cairo_set_line_width(cr, width)
+  cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND)
+  cairo_move_to(cr, points[0][0], points[0][1])
+  for i in 1 ..< points.len:
+    cairo_line_to(cr, points[i][0], points[i][1])
+  cairo_stroke(cr)
+
+proc arc*(r: Renderer; cx, cy, radius, a1, a2: float; c: Color; filled: bool = true; width: float = 1.0) =
+  ## Arc segment (angles in radians). Filled draws a pie wedge (closed through
+  ## the center); non-filled strokes an open arc with the given line width.
+  let cr = toR(r).cr
+  setSource(r, c)
+  if filled:
+    cairo_move_to(cr, cx, cy)
+    cairo_arc(cr, cx, cy, radius, a1, a2)
+    cairo_close_path(cr)
+    cairo_fill(cr)
+  else:
+    cairo_set_line_width(cr, width)
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND)
+    cairo_arc(cr, cx, cy, radius, a1, a2)
+    cairo_stroke(cr)
+
+proc moveTo*(r: Renderer; x, y: float) =
+  ## Begin a new subpath at (x, y) (moves the current point without drawing).
+  cairo_move_to(toR(r).cr, x, y)
+
+proc lineTo*(r: Renderer; x, y: float) =
+  ## Append a straight line from the current point to (x, y).
+  cairo_line_to(toR(r).cr, x, y)
+
+proc arcTo*(r: Renderer; cx, cy, radius, a1, a2: float) =
+  ## Append a circular arc (center + radius + angles in radians) to the path.
+  cairo_arc(toR(r).cr, cx, cy, radius, a1, a2)
+
+proc closePath*(r: Renderer) =
+  ## Close the current subpath with a straight line back to its start point.
+  cairo_close_path(toR(r).cr)
+
+proc fillPath*(r: Renderer; c: Color) =
+  ## Fill the current path (implicitly closing open subpaths) with colour `c`.
+  setSource(r, c)
+  cairo_fill(toR(r).cr)
+
+proc strokePath*(r: Renderer; c: Color; width: float = 1.0) =
+  ## Stroke the current path with colour `c` and the given line width.
+  let cr = toR(r).cr
+  setSource(r, c)
+  cairo_set_line_width(cr, width)
+  cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND)
+  cairo_stroke(cr)
+
 proc present*(r: Renderer) =
   let o = toR(r)
   if termuxDetected():
